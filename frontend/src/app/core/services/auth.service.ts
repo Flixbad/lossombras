@@ -120,6 +120,24 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    // Retourner d'abord depuis le BehaviorSubject si disponible
+    const user = this.currentUserSubject.value;
+    if (user) {
+      return user;
+    }
+    
+    // Sinon, charger depuis localStorage
+    const cachedUser = localStorage.getItem('currentUser');
+    if (cachedUser) {
+      try {
+        const parsedUser = JSON.parse(cachedUser);
+        this.currentUserSubject.next(parsedUser);
+        return parsedUser;
+      } catch (e) {
+        // Ignorer les erreurs de parsing
+      }
+    }
+    
+    return null;
   }
 }
