@@ -1,0 +1,37 @@
+server {
+    listen 80;
+    server_name 31.97.199.106;
+
+    root /var/www/los-sombras/frontend/dist/los-sombras;
+    index index.html;
+
+    # Angular route handling
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # Symfony API
+    location /api {
+        proxy_pass http://127.0.0.1:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+# Symfony backend sur PHP-FPM
+server {
+    listen 9000;
+    root /var/www/los-sombras/backend/public;
+    index index.php;
+
+    location / {
+        try_files $uri /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}

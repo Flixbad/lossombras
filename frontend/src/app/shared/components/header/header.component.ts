@@ -20,7 +20,7 @@ import { Subscription } from 'rxjs';
           (keydown.space)="toggleMenu(); $event.preventDefault()"
           class="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition"
           aria-label="Ouvrir le menu de navigation"
-          aria-expanded="{{ showMobileMenu }}"
+          [attr.aria-expanded]="showMobileMenu"
           aria-controls="mobile-menu">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -66,7 +66,7 @@ import { Subscription } from 'rxjs';
               </svg>
               <span *ngIf="alertesCount > 0" 
                     class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"
-                    aria-label="{{ alertesCount }} alertes de stock">
+                    [attr.aria-label]="alertesCount + ' alertes de stock'">
                 {{ alertesCount }}
               </span>
             </button>
