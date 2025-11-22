@@ -2,42 +2,13 @@
 
 ## 🔍 1. RECHERCHE & FILTRES (Priorité HAUTE)
 
-### Recherche globale
-- Barre de recherche dans le header pour rechercher dans tous les modules
-- Recherche par nom, plaque, propriétaire, emplacement
 
-### Filtres par module
-**Stock :**
-- Filtrer par type d'article
-- Filtrer par quantité (stock faible/élevé)
-- Trier par nom, quantité, date de mise à jour
-
-**Véhicules :**
-- Filtrer par couleur
-- Filtrer par propriétaire
-- Filtrer par emplacement
-- Recherche par plaque ou modèle
-
-**Comptabilité :**
-- Filtrer par date (jour/semaine/mois/personnalisé)
-- Filtrer par utilisateur
-- Filtrer par type d'opération
-- Exporter en CSV/PDF
-
-**Armes :**
-- Filtrer par statut (disponible/sortie)
-- Filtrer par utilisateur qui les a
 
 ---
 
 ## 📊 2. STATISTIQUES & RAPPORTS (Priorité HAUTE)
 
-### Dashboard enrichi
-- Graphiques de tendances (stock, argent)
-- Top 5 des articles les plus utilisés
-- Activité récente des utilisateurs
-- Alertes de stock faible en temps réel
-- Indicateurs de performance (KPIs)
+
 
 ### Rapports personnalisés
 - Générer des rapports mensuels/trimestriels
