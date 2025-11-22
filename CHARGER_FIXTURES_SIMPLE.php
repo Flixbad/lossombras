@@ -24,7 +24,15 @@ $kernel->boot();
 
 $container = $kernel->getContainer();
 $entityManager = $container->get('doctrine.orm.entity_manager');
-$passwordHasher = $container->get('security.user_password_hasher');
+
+// Obtenir le password hasher via l'interface (plus fiable)
+try {
+    $passwordHasher = $container->get(\Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface::class);
+} catch (\Exception $e) {
+    // Si ça ne marche pas, utiliser password_hash directement
+    echo "⚠️  Impossible d'obtenir le password hasher, utilisation de password_hash()\n";
+    $passwordHasher = null;
+}
 
 echo "🚀 Chargement des fixtures...\n";
 echo "══════════════════════════════════════════════════════════════\n\n";
@@ -79,10 +87,20 @@ echo "   ✅ $articleCount articles créés\n\n";
 $userRepo = $entityManager->getRepository(User::class);
 $existingAdmin = $userRepo->findOneBy(['email' => 'admin@losombras.com']);
 
+// Fonction pour hasher le mot de passe
+$hashPassword = function($user, $plainPassword) use ($passwordHasher) {
+    if ($passwordHasher) {
+        return $passwordHasher->hashPassword($user, $plainPassword);
+    } else {
+        // Fallback: utiliser password_hash directement
+        return password_hash($plainPassword, PASSWORD_DEFAULT);
+    }
+};
+
 if ($existingAdmin) {
     echo "⚠️  L'utilisateur admin@losombras.com existe déjà\n";
     echo "   Mise à jour du mot de passe et du rôle...\n";
-    $existingAdmin->setPassword($passwordHasher->hashPassword($existingAdmin, 'admin123'));
+    $existingAdmin->setPassword($hashPassword($existingAdmin, 'admin123'));
     $existingAdmin->setRoles(['ROLE_JEFE']);
     $existingAdmin->setPrenom('Admin');
     $existingAdmin->setNom('Los Sombras');
@@ -92,7 +110,7 @@ if ($existingAdmin) {
     echo "📝 Création de l'utilisateur admin...\n";
     $admin = new User();
     $admin->setEmail('admin@losombras.com');
-    $admin->setPassword($passwordHasher->hashPassword($admin, 'admin123'));
+    $admin->setPassword($hashPassword($admin, 'admin123'));
     $admin->setRoles(['ROLE_JEFE']);
     $admin->setPrenom('Admin');
     $admin->setNom('Los Sombras');
