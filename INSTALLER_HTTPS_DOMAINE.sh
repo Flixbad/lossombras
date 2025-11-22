@@ -2,7 +2,7 @@
 
 set -e
 
-echo "🔒 Installation et configuration HTTPS avec Let's Encrypt"
+echo "🔒 Installation HTTPS avec Let's Encrypt pour ultimateboxingleague.fr"
 echo "══════════════════════════════════════════════════════════════"
 echo ""
 
@@ -19,16 +19,23 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# 1. Demander le domaine
-echo -e "${BLUE}📝 Configuration HTTPS${NC}"
+DOMAIN="ultimateboxingleague.fr"
+DOMAIN_WWW="www.ultimateboxingleague.fr"
+
+echo -e "${BLUE}📝 Domaine configuré :${NC}"
+echo "   - $DOMAIN"
+echo "   - $DOMAIN_WWW"
 echo ""
-read -p "📝 Entrez votre domaine [ultimateboxingleague.fr] : " DOMAIN
-DOMAIN=${DOMAIN:-ultimateboxingleague.fr}
+echo -e "${YELLOW}⚠️  Assurez-vous que le domaine pointe vers cette IP${NC}"
+read -p "📝 Le domaine pointe-t-il vers cette IP ? [O/n] : " CONFIRM
+CONFIRM=${CONFIRM:-O}
 
-read -p "📝 Entrez le domaine avec www [www.ultimateboxingleague.fr] : " DOMAIN_WWW
-DOMAIN_WWW=${DOMAIN_WWW:-www.ultimateboxingleague.fr}
+if [[ ! "$CONFIRM" =~ ^[oO]$ ]] && [ -n "$CONFIRM" ]; then
+    echo -e "${YELLOW}⚠️  Configurez d'abord les DNS de votre domaine avant de continuer${NC}"
+    exit 0
+fi
 
-# 2. Installation de Certbot
+# 1. Installation de Certbot
 echo ""
 echo -e "${BLUE}📝 1/5 - Installation de Certbot...${NC}"
 if command -v certbot &> /dev/null; then
@@ -40,7 +47,7 @@ else
 fi
 echo ""
 
-# 3. Vérifier que Nginx est configuré
+# 2. Vérifier que Nginx est configuré
 echo -e "${BLUE}📝 2/5 - Vérification de la configuration Nginx...${NC}"
 NGINX_CONFIG="/etc/nginx/sites-available/lossombras"
 if [ ! -f "$NGINX_CONFIG" ]; then
@@ -51,53 +58,49 @@ fi
 echo -e "${GREEN}✅ Configuration Nginx trouvée${NC}"
 echo ""
 
-# 4. Vérifier que le serveur_name est correct
-echo -e "${BLUE}📝 3/5 - Mise à jour du serveur_name dans Nginx...${NC}"
+# 3. Mettre à jour le server_name dans Nginx
+echo -e "${BLUE}📝 3/5 - Mise à jour du server_name dans Nginx...${NC}"
 # Créer une sauvegarde
 cp "$NGINX_CONFIG" "$NGINX_CONFIG.backup.$(date +%Y%m%d_%H%M%S)"
 echo -e "${GREEN}✅ Sauvegarde créée${NC}"
 
 # Mettre à jour le server_name
-if grep -q "server_name" "$NGINX_CONFIG"; then
-    # Remplacer le server_name existant
-    sed -i "s/server_name.*/server_name $DOMAIN ${DOMAIN_WWW};/" "$NGINX_CONFIG"
-    echo -e "${GREEN}✅ server_name mis à jour${NC}"
-else
-    echo -e "${YELLOW}⚠️  server_name non trouvé, ajout manuel nécessaire${NC}"
+sed -i "s/server_name.*/server_name $DOMAIN $DOMAIN_WWW;/" "$NGINX_CONFIG"
+echo -e "${GREEN}✅ server_name mis à jour${NC}"
+echo ""
+
+# 4. Obtenir le certificat SSL avec Certbot
+echo -e "${BLUE}📝 4/5 - Obtention du certificat SSL avec Let's Encrypt...${NC}"
+echo -e "${YELLOW}⚠️  Le port 80 doit être ouvert pour la validation${NC}"
+echo ""
+
+# Demander l'email pour Let's Encrypt
+read -p "📝 Entrez votre email pour les notifications Let's Encrypt : " EMAIL
+if [ -z "$EMAIL" ]; then
+    EMAIL="admin@$DOMAIN"
+    echo -e "${BLUE}   Utilisation de l'email par défaut : $EMAIL${NC}"
 fi
 echo ""
 
-# 5. Obtenir le certificat SSL
-echo -e "${BLUE}📝 4/5 - Obtention du certificat SSL...${NC}"
-echo -e "${YELLOW}⚠️  Assurez-vous que le domaine $DOMAIN pointe vers cette IP${NC}"
-echo -e "${YELLOW}⚠️  Le port 80 doit être ouvert${NC}"
-read -p "📝 Continuer ? [O/n] : " CONFIRM
-CONFIRM=${CONFIRM:-O}
+certbot --nginx -d "$DOMAIN" -d "$DOMAIN_WWW" \
+  --non-interactive \
+  --agree-tos \
+  --email "$EMAIL" \
+  --redirect
 
-if [[ "$CONFIRM" =~ ^[oO]$ ]] || [ -z "$CONFIRM" ]; then
-    if [ -n "$DOMAIN_WWW" ]; then
-        certbot --nginx -d "$DOMAIN" -d "$DOMAIN_WWW" --non-interactive --agree-tos --email "admin@$DOMAIN" --redirect
-    else
-        certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "admin@$DOMAIN" --redirect
-    fi
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ Certificat SSL obtenu avec succès !${NC}"
-    else
-        echo -e "${RED}❌ Erreur lors de l'obtention du certificat${NC}"
-        echo "   Vérifiez :"
-        echo "   - Que le domaine pointe vers cette IP"
-        echo "   - Que le port 80 est ouvert"
-        echo "   - Que Nginx fonctionne correctement"
-        exit 1
-    fi
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Certificat SSL obtenu avec succès !${NC}"
 else
-    echo -e "${YELLOW}⚠️  Obtention du certificat annulée${NC}"
-    exit 0
+    echo -e "${RED}❌ Erreur lors de l'obtention du certificat${NC}"
+    echo "   Vérifiez :"
+    echo "   - Que le domaine $DOMAIN pointe vers cette IP"
+    echo "   - Que le port 80 est ouvert"
+    echo "   - Que Nginx fonctionne correctement"
+    exit 1
 fi
 echo ""
 
-# 6. Vérifier la configuration
+# 5. Vérifier la configuration
 echo -e "${BLUE}📝 5/5 - Vérification de la configuration...${NC}"
 if nginx -t 2>&1; then
     echo -e "${GREEN}✅ Configuration Nginx valide${NC}"
@@ -109,7 +112,7 @@ else
 fi
 echo ""
 
-# 7. Tester le renouvellement
+# 6. Tester le renouvellement
 echo -e "${BLUE}📝 Test du renouvellement automatique...${NC}"
 certbot renew --dry-run
 echo ""
@@ -119,14 +122,13 @@ echo -e "${GREEN}✅ HTTPS configuré avec succès !${NC}"
 echo "══════════════════════════════════════════════════════════════"
 echo ""
 echo "📋 Informations :"
-echo "   Domaine : https://$DOMAIN"
-if [ -n "$DOMAIN_WWW" ]; then
-    echo "   Domaine www : https://$DOMAIN_WWW"
-fi
+echo "   URL : https://$DOMAIN"
+echo "   URL www : https://$DOMAIN_WWW"
 echo ""
 echo "🧪 Pour tester :"
 echo "   curl -I https://$DOMAIN"
 echo ""
 echo "📖 Le certificat sera renouvelé automatiquement tous les 90 jours"
+echo "   Vérifier : sudo certbot renew --dry-run"
 echo ""
 
