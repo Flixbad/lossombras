@@ -25,7 +25,7 @@ export interface Comptabilite {
   providedIn: 'root'
 })
 export class ComptabiliteService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

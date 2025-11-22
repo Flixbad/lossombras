@@ -11,7 +11,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Aller dans le répertoire
-cd /var/www/los-sombras
+cd /var/www/lossombras
 
 # Pull les dernières modifications
 echo -e "${BLUE}📥 Pull depuis Git...${NC}"
@@ -39,9 +39,9 @@ ng build --configuration production
 # Permissions
 echo -e "${YELLOW}🔐 Mise à jour des permissions...${NC}"
 cd ..
-sudo chown -R www-data:www-data /var/www/los-sombras
-sudo chmod -R 755 /var/www/los-sombras
-sudo chmod -R 775 /var/www/los-sombras/backend/var
+sudo chown -R www-data:www-data /var/www/lossombras
+sudo chmod -R 755 /var/www/lossombras
+sudo chmod -R 775 /var/www/lossombras/backend/var
 
 # Redémarrer les services
 echo -e "${YELLOW}🔄 Redémarrage des services...${NC}"

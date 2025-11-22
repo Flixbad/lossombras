@@ -37,7 +37,7 @@ export interface ArgentStats {
   providedIn: 'root'
 })
 export class ArgentService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

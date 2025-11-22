@@ -65,7 +65,7 @@ import { interval, Subscription } from 'rxjs';
         <!-- Top 5 Articles -->
         <div class="bg-white rounded-lg shadow p-4 md:p-6">
           <h2 class="text-lg md:text-xl font-semibold text-gray-800 mb-4">Top 5 Articles les plus utilisés</h2>
-          <div *ngIf="data?.topArticles && data?.topArticles?.length > 0" class="space-y-3">
+          <div *ngIf="data?.topArticles && (data?.topArticles?.length ?? 0) > 0" class="space-y-3">
             <div *ngFor="let article of data?.topArticles; let i = index" 
                  class="flex items-center justify-between p-3 bg-gray-50 rounded">
               <div class="flex items-center">
@@ -77,7 +77,7 @@ import { interval, Subscription } from 'rxjs';
               <span class="text-gray-600 font-semibold">{{ article.quantite | number:'1.0-0' }}</span>
             </div>
           </div>
-          <div *ngIf="!data?.topArticles || data?.topArticles?.length === 0" class="text-gray-500 text-center py-8">
+          <div *ngIf="!data?.topArticles || (data?.topArticles?.length ?? 0) === 0" class="text-gray-500 text-center py-8">
             Aucune donnée disponible
           </div>
         </div>

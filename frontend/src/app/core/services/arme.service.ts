@@ -22,7 +22,7 @@ export interface Arme {
   providedIn: 'root'
 })
 export class ArmeService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

@@ -96,11 +96,30 @@ sudo npm install -g @angular/cli@17
 #### PHP 8.2 et extensions
 
 ```bash
+# Vérifier la version de PHP disponible
+apt search php | grep php8
+
+# Ajouter le dépôt PHP si nécessaire (pour Ubuntu/Debian)
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+
 # Installer PHP 8.2
 sudo apt install -y php8.2 php8.2-cli php8.2-fpm php8.2-mysql php8.2-xml php8.2-curl php8.2-zip php8.2-mbstring php8.2-intl php8.2-bcmath
 
+# Si PHP 8.2 n'est toujours pas disponible, essayez PHP 8.1 ou 8.3
+# sudo apt install -y php8.1 php8.1-cli php8.1-fpm php8.1-mysql php8.1-xml php8.1-curl php8.1-zip php8.1-mbstring php8.1-intl php8.1-bcmath
+
 # Vérifier
 php -v
+```
+
+**Note :** Si vous utilisez CentOS/RHEL ou une autre distribution, utilisez :
+```bash
+# Pour CentOS/RHEL 8+
+sudo dnf install -y https://rpms.remirepo.net/enterprise/remi-release-8.rpm
+sudo dnf module enable php:remi-8.2 -y
+sudo dnf install -y php php-cli php-fpm php-mysqlnd php-xml php-curl php-zip php-mbstring php-intl php-bcmath
 ```
 
 #### Composer
@@ -115,11 +134,12 @@ sudo chmod +x /usr/local/bin/composer
 composer --version
 ```
 
-#### MySQL
+#### MySQL/MariaDB
 
+**Sur Debian récent (Trixie, Bookworm) :**
 ```bash
-# Installer MySQL
-sudo apt install -y mysql-server
+# Installer MariaDB (remplace MySQL sur Debian récent)
+sudo apt install -y mariadb-server
 
 # Sécuriser l'installation
 sudo mysql_secure_installation
@@ -127,13 +147,24 @@ sudo mysql_secure_installation
 # Créer la base de données et l'utilisateur
 sudo mysql -u root -p
 
-# Dans MySQL :
+# Dans MariaDB/MySQL (les commandes sont identiques) :
 CREATE DATABASE los_sombras CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'los_sombras_user'@'localhost' IDENTIFIED BY 'votre_mot_de_passe_fort';
 GRANT ALL PRIVILEGES ON los_sombras.* TO 'los_sombras_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
+
+**Sur Ubuntu ou si vous voulez MySQL spécifiquement :**
+```bash
+# Installer MySQL
+sudo apt install -y mysql-server
+sudo mysql_secure_installation
+sudo mysql -u root -p
+# Puis les mêmes commandes SQL ci-dessus
+```
+
+**Note :** MariaDB est 100% compatible avec MySQL. Symfony fonctionne parfaitement avec les deux. Les commandes SQL sont identiques.
 
 #### Nginx
 
@@ -157,11 +188,11 @@ sudo systemctl status nginx
 
 ```bash
 # Créer le répertoire
-sudo mkdir -p /var/www/los-sombras
-sudo chown -R $USER:$USER /var/www/los-sombras
+sudo mkdir -p /var/www/lossombras
+sudo chown -R $USER:$USER /var/www/lossombras
 
 # Aller dans le répertoire
-cd /var/www/los-sombras
+cd /var/www/lossombras
 ```
 
 ### 3.2 Cloner le repo Git
@@ -178,7 +209,7 @@ git clone git@votre-repo.git .
 
 ```bash
 # Aller dans le dossier backend
-cd /var/www/los-sombras/backend
+cd /var/www/lossombras/backend
 
 # Installer les dépendances
 composer install --no-dev --optimize-autoloader
@@ -214,7 +245,7 @@ php bin/console cache:clear --env=prod
 
 ```bash
 # Aller dans le dossier frontend
-cd /var/www/los-sombras/frontend
+cd /var/www/lossombras/frontend
 
 # Installer les dépendances
 npm install
@@ -230,15 +261,15 @@ ls -la dist/frontend/
 
 ```bash
 # Retourner à la racine
-cd /var/www/los-sombras
+cd /var/www/lossombras
 
 # Donner les bonnes permissions
-sudo chown -R www-data:www-data /var/www/los-sombras
-sudo chmod -R 755 /var/www/los-sombras
+sudo chown -R www-data:www-data /var/www/lossombras
+sudo chmod -R 755 /var/www/lossombras
 
 # Permissions spécifiques pour Symfony
-sudo chmod -R 775 /var/www/los-sombras/backend/var
-sudo chown -R www-data:www-data /var/www/los-sombras/backend/var
+sudo chmod -R 775 /var/www/lossombras/backend/var
+sudo chown -R www-data:www-data /var/www/lossombras/backend/var
 ```
 
 ---
@@ -281,7 +312,7 @@ server {
     # ssl_certificate /etc/letsencrypt/live/votre-domaine.com/fullchain.pem;
     # ssl_certificate_key /etc/letsencrypt/live/votre-domaine.com/privkey.pem;
     
-    root /var/www/los-sombras/frontend/dist/frontend/browser;
+    root /var/www/lossombras/frontend/dist/frontend/browser;
     index index.html;
     
     # Logs
@@ -300,8 +331,8 @@ server {
         fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
         fastcgi_split_path_info ^(.+\.php)(/.*)$;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME /var/www/los-sombras/backend/public/index.php;
-        fastcgi_param DOCUMENT_ROOT /var/www/los-sombras/backend/public;
+        fastcgi_param SCRIPT_FILENAME /var/www/lossombras/backend/public/index.php;
+        fastcgi_param DOCUMENT_ROOT /var/www/lossombras/backend/public;
         fastcgi_param PATH_INFO $fastcgi_path_info;
         fastcgi_param REQUEST_URI $1;
         fastcgi_param HTTPS $https if_not_empty;
@@ -313,8 +344,8 @@ server {
         fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
         fastcgi_split_path_info ^(.+\.php)(/.*)$;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME /var/www/los-sombras/backend/public$1.php;
-        fastcgi_param DOCUMENT_ROOT /var/www/los-sombras/backend/public;
+        fastcgi_param SCRIPT_FILENAME /var/www/lossombras/backend/public$1.php;
+        fastcgi_param DOCUMENT_ROOT /var/www/lossombras/backend/public;
         fastcgi_param PATH_INFO $2;
     }
     
@@ -446,7 +477,7 @@ sudo certbot renew --dry-run
 Si votre frontend a besoin de variables d'environnement pour l'API :
 
 ```bash
-cd /var/www/los-sombras/frontend/src
+cd /var/www/lossombras/frontend/src
 
 # Créer un fichier environment.prod.ts
 nano environments/environment.prod.ts
@@ -466,7 +497,7 @@ Puis modifier `angular.json` pour utiliser cet environnement en production.
 ## 9️⃣ Créer un Script de Déploiement
 
 ```bash
-cd /var/www/los-sombras
+cd /var/www/lossombras
 nano deploy.sh
 ```
 
@@ -477,7 +508,7 @@ set -e
 echo "🚀 Déploiement Los Sombras..."
 
 # Aller dans le répertoire
-cd /var/www/los-sombras
+cd /var/www/lossombras
 
 # Pull les dernières modifications
 echo "📥 Pull depuis Git..."
@@ -499,9 +530,9 @@ ng build --configuration production
 # Permissions
 echo "🔐 Mise à jour des permissions..."
 cd ..
-sudo chown -R www-data:www-data /var/www/los-sombras
-sudo chmod -R 755 /var/www/los-sombras
-sudo chmod -R 775 /var/www/los-sombras/backend/var
+sudo chown -R www-data:www-data /var/www/lossombras
+sudo chmod -R 755 /var/www/lossombras
+sudo chmod -R 775 /var/www/lossombras/backend/var
 
 # Redémarrer les services
 echo "🔄 Redémarrage des services..."
@@ -530,7 +561,7 @@ sudo systemctl status mysql
 
 # Logs
 sudo tail -f /var/log/nginx/los-sombras-error.log
-sudo tail -f /var/www/los-sombras/backend/var/log/prod.log
+sudo tail -f /var/www/lossombras/backend/var/log/prod.log
 ```
 
 ### Redémarrer les services
@@ -585,18 +616,18 @@ ls -la /var/run/php/php8.2-fpm.sock
 ### Erreur de permissions
 
 ```bash
-sudo chown -R www-data:www-data /var/www/los-sombras
-sudo chmod -R 755 /var/www/los-sombras
+sudo chown -R www-data:www-data /var/www/lossombras
+sudo chmod -R 755 /var/www/lossombras
 ```
 
 ### Frontend ne charge pas
 
 ```bash
 # Vérifier le build
-ls -la /var/www/los-sombras/frontend/dist/frontend/browser/
+ls -la /var/www/lossombras/frontend/dist/frontend/browser/
 
 # Rebuild si nécessaire
-cd /var/www/los-sombras/frontend
+cd /var/www/lossombras/frontend
 ng build --configuration production
 ```
 
@@ -620,7 +651,7 @@ Votre application devrait maintenant être accessible sur `http://votre-domaine.
 Pour les mises à jour futures, utilisez simplement le script `deploy.sh` :
 
 ```bash
-cd /var/www/los-sombras
+cd /var/www/lossombras
 ./deploy.sh
 ```
 

@@ -20,7 +20,7 @@ export interface Stock {
   providedIn: 'root'
 })
 export class StockService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 
