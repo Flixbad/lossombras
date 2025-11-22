@@ -186,7 +186,7 @@ cd ..
 sudo chown -R www-data:www-data /var/www/lossombras
 
 # Redémarrer
-sudo systemctl restart php8.2-fpm
+sudo systemctl restart php8.4-fpm
 sudo systemctl reload nginx
 ```
 
