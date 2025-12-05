@@ -12,13 +12,13 @@ import { AuthService } from './core/services/auth.service';
   imports: [CommonModule, RouterOutlet, SidebarComponent, HeaderComponent],
   template: `
     <a href="#main-content" class="skip-link">Aller au contenu principal</a>
-    <div *ngIf="showSidebar" class="flex h-screen bg-gray-100 overflow-hidden">
+    <div *ngIf="showSidebar" class="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 overflow-hidden">
       <!-- Sidebar Desktop -->
       <app-sidebar class="hidden lg:flex" role="complementary" aria-label="Navigation principale"></app-sidebar>
       
       <div class="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
         <app-header (menuToggle)="toggleMobileMenu()" role="banner"></app-header>
-        <main id="main-content" class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" role="main" tabindex="-1">
+        <main id="main-content" class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-transparent" role="main" tabindex="-1">
           <router-outlet></router-outlet>
         </main>
       </div>

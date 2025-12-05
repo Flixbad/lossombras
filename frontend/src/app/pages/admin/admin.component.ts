@@ -2,57 +2,83 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../core/services/admin.service';
-import { User } from '../../core/services/auth.service';
+import { AuthService, User } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-8">
-      <h1 class="text-3xl font-bold text-gray-800">Administration - Gestion des utilisateurs</h1>
+    <div class="space-y-6 md:space-y-8">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-purple-800 bg-clip-text text-transparent mb-2">Administration</h1>
+        <p class="text-gray-600 text-sm md:text-base">Gestion des utilisateurs et des permissions</p>
+      </div>
       
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pseudo</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prénom</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Âge</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Téléphone</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rôle</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-gray-100/50">
+        <div class="p-5 md:p-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Gestion des utilisateurs</h2>
+              <p class="text-xs text-gray-500">Liste complète des membres</p>
+            </div>
+          </div>
+        </div>
+        <table class="min-w-full">
+          <thead>
+            <tr class="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Pseudo</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Prénom</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nom</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Âge</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Téléphone</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rôle</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr *ngFor="let user of users">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          <tbody class="divide-y divide-gray-100">
+            <tr *ngFor="let user of users" class="hover:bg-gray-50/50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                 {{ user.pseudo || '-' }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.prenom || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.nom || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.age || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.telephone || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ getRoleDisplay(user.roles) }}
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.email }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.prenom || '-' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.nom || '-' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.age || '-' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.telephone || '-' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex flex-wrap gap-1">
+                  <span *ngFor="let role of user.roles || []" 
+                        class="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold">
+                    {{ role.replace('ROLE_', '') }}
+                  </span>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button (click)="openEditModal(user)" 
-                        class="text-blue-600 hover:text-blue-800 mr-3">Modifier</button>
-                <button (click)="deleteUser(user.id)" 
-                        class="text-red-600 hover:text-red-800">Supprimer</button>
+                <div class="flex gap-2">
+                  <button (click)="openEditModal(user)" 
+                          class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition-colors text-xs">Modifier</button>
+                  <button (click)="deleteUser(user.id)" 
+                          class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition-colors text-xs">Supprimer</button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
       
-      <div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold mb-4">Modifier l'utilisateur</h2>
+      <div *ngIf="showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
+          <div class="mb-6">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Modifier l'utilisateur</h2>
+            <p class="text-sm text-gray-500">Mise à jour des informations et permissions</p>
+          </div>
           <form (ngSubmit)="updateUser()" class="space-y-4">
             <div>
               <label class="block text-sm font-medium mb-2">Pseudo</label>
@@ -80,18 +106,98 @@ import { User } from '../../core/services/auth.service';
                      class="w-full px-4 py-2 border rounded-md">
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Rôle</label>
-              <select [(ngModel)]="selectedRole" (change)="onRoleChange()" name="roles" required
-                      class="w-full px-4 py-2 border rounded-md">
-                <option value="ROLE_NUEVOS">Nuevos</option>
-                <option value="ROLE_SOLDADO">Soldado</option>
-                <option value="ROLE_SICARIO">Sicario</option>
-                <option value="ROLE_CAPITAN">Capitan</option>
-                <option value="ROLE_ALFERES">Alfères</option>
-                <option value="ROLE_COMANDANTE">Comandante</option>
-                <option value="ROLE_SEGUNDO">Segundo</option>
-                <option value="ROLE_JEFE">Jefe</option>
-              </select>
+              <label class="block text-sm font-medium mb-2">Rôles</label>
+              <p class="text-xs text-gray-500 mb-3">Vous pouvez sélectionner plusieurs rôles</p>
+              <div class="space-y-2 border rounded-md p-3 max-h-64 overflow-y-auto">
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_NUEVOS']"
+                         (change)="onRoleCheckChange()"
+                         name="role_nuevos"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Nuevos</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_SOLDADO']"
+                         (change)="onRoleCheckChange()"
+                         name="role_soldado"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Soldado</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_SICARIO']"
+                         (change)="onRoleCheckChange()"
+                         name="role_sicario"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Sicario</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_CAPITAN']"
+                         (change)="onRoleCheckChange()"
+                         name="role_capitan"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Capitan</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_ALFERES']"
+                         (change)="onRoleCheckChange()"
+                         name="role_alfères"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Alfères</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_COMANDANTE']"
+                         (change)="onRoleCheckChange()"
+                         name="role_comandante"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Comandante</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_SEGUNDO']"
+                         (change)="onRoleCheckChange()"
+                         name="role_segundo"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Segundo</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_JEFE']"
+                         (change)="onRoleCheckChange()"
+                         name="role_jefe"
+                         class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                  <span class="text-sm">Jefe</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded border-t pt-2 mt-2">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_GESTION_DROGUE']"
+                         (change)="onRoleCheckChange()"
+                         name="role_gestion_drogue"
+                         class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
+                  <span class="text-sm font-medium text-purple-700">Gestion Drogue</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded border-t pt-2 mt-2">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_CONTADOR']"
+                         (change)="onRoleCheckChange()"
+                         name="role_contador"
+                         class="w-4 h-4 text-green-600 rounded focus:ring-green-500">
+                  <span class="text-sm font-medium text-green-700">Contador</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded border-t pt-2 mt-2">
+                  <input type="checkbox" 
+                         [(ngModel)]="selectedRoles['ROLE_ARMADA']"
+                         (change)="onRoleCheckChange()"
+                         name="role_armada"
+                         class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500">
+                  <span class="text-sm font-medium text-orange-700">Armada</span>
+                </label>
+              </div>
             </div>
             <div class="flex gap-4">
               <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
@@ -113,7 +219,7 @@ export class AdminComponent implements OnInit {
   users: User[] = [];
   showEditModal = false;
   selectedUser: User | null = null;
-  selectedRole = 'ROLE_NUEVOS';
+  selectedRoles: { [key: string]: boolean } = {};
   
   editUserData = {
     pseudo: '',
@@ -132,10 +238,16 @@ export class AdminComponent implements OnInit {
     'ROLE_ALFERES': 'Alfères',
     'ROLE_COMANDANTE': 'Comandante',
     'ROLE_SEGUNDO': 'Segundo',
-    'ROLE_JEFE': 'Jefe'
+    'ROLE_JEFE': 'Jefe',
+    'ROLE_GESTION_DROGUE': 'Gestion Drogue',
+    'ROLE_CONTADOR': 'Contador',
+    'ROLE_ARMADA': 'Armada'
   };
 
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -154,21 +266,78 @@ export class AdminComponent implements OnInit {
 
   openEditModal(user: User): void {
     this.selectedUser = user;
-    const role = user.roles.find(r => r.startsWith('ROLE_') && r !== 'ROLE_USER');
-    this.selectedRole = role || 'ROLE_NUEVOS';
+    
+    // Initialiser les checkboxes avec les rôles actuels de l'utilisateur
+    this.selectedRoles = {
+      'ROLE_NUEVOS': false,
+      'ROLE_SOLDADO': false,
+      'ROLE_SICARIO': false,
+      'ROLE_CAPITAN': false,
+      'ROLE_ALFERES': false,
+      'ROLE_COMANDANTE': false,
+      'ROLE_SEGUNDO': false,
+      'ROLE_JEFE': false,
+      'ROLE_GESTION_DROGUE': false,
+      'ROLE_CONTADOR': false,
+      'ROLE_ARMADA': false
+    };
+    
+    // Cocher les rôles existants (en excluant ROLE_USER qui est automatique)
+    user.roles.forEach(role => {
+      if (role !== 'ROLE_USER' && this.selectedRoles.hasOwnProperty(role)) {
+        this.selectedRoles[role] = true;
+      }
+    });
+    
+    // S'assurer qu'au moins un rôle hiérarchique est sélectionné ou un rôle spécial
+    const specialRoles = ['ROLE_GESTION_DROGUE', 'ROLE_CONTADOR', 'ROLE_ARMADA'];
+    const hasHierarchicalRole = Object.keys(this.selectedRoles).some(
+      key => this.selectedRoles[key] && !specialRoles.includes(key)
+    );
+    const hasSpecialRole = specialRoles.some(role => this.selectedRoles[role]);
+    if (!hasHierarchicalRole && !hasSpecialRole) {
+      this.selectedRoles['ROLE_NUEVOS'] = true;
+    }
+    
+    this.updateRolesFromCheckboxes();
+    
     this.editUserData = {
       pseudo: user.pseudo || '',
       prenom: user.prenom || '',
       nom: user.nom || '',
       age: user.age || undefined,
       telephone: user.telephone || '',
-      roles: [this.selectedRole]
+      roles: this.editUserData.roles
     };
     this.showEditModal = true;
   }
 
-  onRoleChange(): void {
-    this.editUserData.roles = [this.selectedRole];
+  onRoleCheckChange(): void {
+    this.updateRolesFromCheckboxes();
+  }
+
+  updateRolesFromCheckboxes(): void {
+    const selectedRoleKeys = Object.keys(this.selectedRoles).filter(
+      key => this.selectedRoles[key]
+    );
+    
+    // Si aucun rôle hiérarchique n'est sélectionné, mais un rôle spécial l'est,
+    // on garde au moins ROLE_NUEVOS pour la hiérarchie
+    const hierarchicalRoles = ['ROLE_NUEVOS', 'ROLE_SOLDADO', 'ROLE_SICARIO', 
+                               'ROLE_CAPITAN', 'ROLE_ALFERES', 'ROLE_COMANDANTE', 
+                               'ROLE_SEGUNDO', 'ROLE_JEFE'];
+    const specialRoles = ['ROLE_GESTION_DROGUE', 'ROLE_CONTADOR', 'ROLE_ARMADA'];
+    const hasHierarchicalRole = selectedRoleKeys.some(
+      key => hierarchicalRoles.includes(key)
+    );
+    const hasSpecialRole = specialRoles.some(role => selectedRoleKeys.includes(role));
+    
+    if (!hasHierarchicalRole && hasSpecialRole) {
+      this.selectedRoles['ROLE_NUEVOS'] = true;
+      selectedRoleKeys.push('ROLE_NUEVOS');
+    }
+    
+    this.editUserData.roles = selectedRoleKeys;
   }
 
   updateUser(): void {
@@ -178,6 +347,13 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.showEditModal = false;
         this.loadUsers();
+        
+        // Si l'utilisateur modifie ses propres rôles, recharger sa session
+        const currentUser = this.authService.getCurrentUser();
+        if (currentUser && currentUser.id === this.selectedUser?.id) {
+          console.log('[Admin] Rechargement de la session utilisateur après modification des rôles');
+          this.authService.reloadUser();
+        }
       },
       error: () => {
         alert('Erreur lors de la modification de l\'utilisateur');
@@ -199,7 +375,14 @@ export class AdminComponent implements OnInit {
   }
 
   getRoleDisplay(roles: string[]): string {
-    const role = roles.find(r => r.startsWith('ROLE_') && r !== 'ROLE_USER');
-    return role ? (this.rolesMap[role] || role) : 'Nuevos';
+    const relevantRoles = roles.filter(r => r.startsWith('ROLE_') && r !== 'ROLE_USER');
+    if (relevantRoles.length === 0) {
+      return 'Nuevos';
+    }
+    if (relevantRoles.length === 1) {
+      return this.rolesMap[relevantRoles[0]] || relevantRoles[0];
+    }
+    // Afficher les rôles séparés par des virgules
+    return relevantRoles.map(r => this.rolesMap[r] || r).join(', ');
   }
 }

@@ -5,18 +5,18 @@ import { StockService, Stock, Article } from '../../core/services/stock.service'
 import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-tooltip.component';
 
 @Component({
-  selector: 'app-stock',
+  selector: 'app-stock-drogue',
   standalone: true,
   imports: [CommonModule, FormsModule, HelpTooltipComponent],
   template: `
     <div class="space-y-6 md:space-y-8">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-2">Stock Général</h1>
-          <p class="text-gray-600 text-sm md:text-base">Gestion complète de votre inventaire</p>
+          <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-800 bg-clip-text text-transparent mb-2">Stock Drogue</h1>
+          <p class="text-gray-600 text-sm md:text-base">Gestion spécialisée de votre inventaire</p>
         </div>
         <button (click)="showAddModal = true" 
-                class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm md:text-base font-semibold flex items-center gap-2">
+                class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm md:text-base font-semibold flex items-center gap-2">
           <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
@@ -28,8 +28,8 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
       <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 md:p-6 border border-gray-100/50">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           <div>
-            <label for="stock-search" class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Recherche</label>
-            <input id="stock-search" type="search" [(ngModel)]="searchQuery" 
+            <label for="drogue-search" class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Recherche</label>
+            <input id="drogue-search" type="search" [(ngModel)]="searchQuery" 
                    (input)="applyFilters()"
                    placeholder="Nom de l'article..."
                    aria-label="Rechercher un article"
@@ -37,8 +37,8 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                    class="w-full px-3 md:px-4 py-2 text-sm md:text-base border rounded-md">
           </div>
           <div>
-            <label for="stock-type-filter" class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Filtrer par type</label>
-            <select id="stock-type-filter" [(ngModel)]="filterType" (change)="applyFilters()" 
+            <label for="drogue-type-filter" class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Filtrer par type</label>
+            <select id="drogue-type-filter" [(ngModel)]="filterType" (change)="applyFilters()" 
                     aria-label="Filtrer les articles par type"
                     class="w-full px-3 md:px-4 py-2 text-sm md:text-base border rounded-md">
               <option value="">Tous les types</option>
@@ -46,8 +46,8 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
             </select>
           </div>
           <div>
-            <label for="stock-sort" class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Trier par</label>
-            <select id="stock-sort" [(ngModel)]="sortBy" (change)="applyFilters()" 
+            <label for="drogue-sort" class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Trier par</label>
+            <select id="drogue-sort" [(ngModel)]="sortBy" (change)="applyFilters()" 
                     aria-label="Trier les articles"
                     class="w-full px-3 md:px-4 py-2 text-sm md:text-base border rounded-md">
               <option value="nom">Nom (A-Z)</option>
@@ -60,9 +60,9 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
       
       <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-gray-100/50">
         <div class="overflow-x-auto">
-          <table class="min-w-full" role="table" aria-label="Tableau des stocks">
+          <table class="min-w-full" role="table" aria-label="Tableau des stocks de drogue">
             <thead>
-              <tr class="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
+              <tr class="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-gray-200">
                 <th scope="col" class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Article</th>
                 <th scope="col" class="hidden sm:table-cell px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
                 <th scope="col" class="px-4 md:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Quantité</th>
@@ -71,18 +71,18 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              <tr *ngFor="let stock of filteredStocks" class="hover:bg-blue-50/30 transition-colors duration-150">
+              <tr *ngFor="let stock of filteredStocks" class="hover:bg-purple-50/30 transition-colors duration-150">
                 <td class="px-4 md:px-6 py-4 text-sm font-semibold text-gray-900 truncate max-w-[150px] sm:max-w-none">{{ stock.article.nom }}</td>
                 <td class="hidden sm:table-cell px-4 md:px-6 py-4 text-sm text-gray-600">{{ stock.article.type || '-' }}</td>
                 <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                  <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold text-sm">
+                  <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 font-bold text-sm">
                     {{ stock.quantite | number:'1.0-0' }}
                   </span>
                 </td>
                 <td class="hidden md:table-cell px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm">
                   <button (click)="openEditUniteModal(stock)" 
                           [attr.aria-label]="'Modifier l unite de ' + stock.article.nom"
-                          class="text-gray-500 hover:text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1 hover:bg-blue-50 transition-colors flex items-center gap-1">
+                          class="text-gray-500 hover:text-purple-600 font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded px-2 py-1 hover:bg-purple-50 transition-colors flex items-center gap-1">
                     <span>{{ stock.article.unite || 'Non définie' }}</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -93,7 +93,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                   <button (click)="openEditModal(stock)" 
                           (keydown.enter)="openEditModal(stock)"
                           [attr.aria-label]="'Modifier le stock de ' + stock.article.nom"
-                          class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                          class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
                     Modifier
                   </button>
                 </td>
@@ -103,13 +103,10 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
         </div>
       </div>
       
-      <div *ngIf="showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
-          <div class="flex justify-between items-start mb-6">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900 mb-1">Modifier le stock</h2>
-              <p class="text-sm text-gray-500">Mise à jour de l'inventaire</p>
-            </div>
+      <div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div class="flex justify-between items-start mb-4">
+            <h2 class="text-2xl font-bold">Modifier le stock</h2>
             <button (click)="showEditModal = false" class="text-gray-400 hover:text-gray-600" aria-label="Fermer">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -118,21 +115,9 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
           </div>
           
           <!-- Information sur l'article -->
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-5 mb-6 shadow-sm">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-600 mb-1">Article</p>
-                <p class="text-lg font-bold text-gray-900">{{ selectedStock?.article?.nom }}</p>
-              </div>
-            </div>
-            <div class="pt-3 border-t border-blue-200/50">
-              <p class="text-sm text-gray-600">Stock actuel : <span class="font-bold text-blue-700 text-lg">{{ selectedStock?.quantite | number:'1.0-0' }} {{ selectedStock?.article?.unite || '' }}</span></p>
-            </div>
+          <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <p class="text-sm font-medium text-gray-700 mb-1">Article : <span class="font-bold text-gray-900">{{ selectedStock?.article?.nom }}</span></p>
+            <p class="text-sm text-gray-600">Stock actuel : <span class="font-semibold text-purple-600">{{ selectedStock?.quantite | number:'1.0-0' }} {{ selectedStock?.article?.unite || '' }}</span></p>
           </div>
 
           <form (ngSubmit)="updateStock()" class="space-y-4">
@@ -180,7 +165,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                      required
                      (input)="calculateNewStock()"
                      [class.border-red-500]="hasError()"
-                     class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                     class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
               <p *ngIf="hasError()" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -215,7 +200,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                         name="commentaire"
                         placeholder="Ex: Livraison fournisseur, Vente client, Stock initial..."
                         rows="3"
-                        class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+                        class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"></textarea>
             </div>
             
             <div class="flex gap-4 pt-2">
@@ -223,7 +208,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                       [disabled]="hasError() || !editData.quantite"
                       [class.opacity-50]="hasError() || !editData.quantite"
                       [class.cursor-not-allowed]="hasError() || !editData.quantite"
-                      class="flex-1 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2">
+                      class="flex-1 bg-purple-600 text-white py-3 rounded-md hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
@@ -250,9 +235,9 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
             </button>
           </div>
           
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
             <p class="text-sm font-medium text-gray-700">Article : <span class="font-bold text-gray-900">{{ selectedArticleForUnite?.nom }}</span></p>
-            <p class="text-sm text-gray-600 mt-1">Unité actuelle : <span class="font-semibold text-blue-600">{{ selectedArticleForUnite?.unite || 'Non définie' }}</span></p>
+            <p class="text-sm text-gray-600 mt-1">Unité actuelle : <span class="font-semibold text-purple-600">{{ selectedArticleForUnite?.unite || 'Non définie' }}</span></p>
           </div>
 
           <form (ngSubmit)="updateUnite()" class="space-y-4">
@@ -264,7 +249,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
               <select [(ngModel)]="newUnite" 
                       name="unite"
                       required
-                      class="w-full px-4 py-3 border-2 rounded-md text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                      class="w-full px-4 py-3 border-2 rounded-md text-base focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
                 <option value="">Sélectionner une unité...</option>
                 <option value="kg">kg (kilogramme) - Pour les poids</option>
                 <option value="L">L (litre) - Pour les liquides</option>
@@ -281,7 +266,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                       [disabled]="!newUnite"
                       [class.opacity-50]="!newUnite"
                       [class.cursor-not-allowed]="!newUnite"
-                      class="flex-1 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2">
+                      class="flex-1 bg-purple-600 text-white py-3 rounded-md hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
@@ -297,13 +282,10 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
         </div>
       </div>
       
-      <div *ngIf="showAddModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
-          <div class="flex justify-between items-start mb-6">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900 mb-1">Ajouter un article</h2>
-              <p class="text-sm text-gray-500">Créer un nouvel élément dans l'inventaire</p>
-            </div>
+      <div *ngIf="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div class="flex justify-between items-start mb-4">
+            <h2 class="text-2xl font-bold">Ajouter un article</h2>
             <button (click)="showAddModal = false" class="text-gray-400 hover:text-gray-600" aria-label="Fermer">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -315,41 +297,38 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
             <div>
               <div class="flex items-center gap-2 mb-2">
                 <label class="block text-sm font-medium text-gray-700">Nom de l'article *</label>
-                <app-help-tooltip text="Entrez le nom de l'article (ex: 'Engrais', 'Nebula Pots', 'Kit Voitures'). Ce champ est obligatoire."></app-help-tooltip>
+                <app-help-tooltip text="Entrez le nom de l'article (ex: 'Engrais', 'Nebula Pots', etc.). Ce champ est obligatoire."></app-help-tooltip>
               </div>
               <input type="text" 
                      [(ngModel)]="newArticle.nom" 
                      name="nom" 
                      required
                      placeholder="Ex: Engrais, Nebula Pots..."
-                     class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                     class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
             </div>
             
             <div>
               <div class="flex items-center gap-2 mb-2">
                 <label class="block text-sm font-medium text-gray-700">Type (optionnel)</label>
-                <app-help-tooltip text="Catégorisez votre article (ex: 'Matière première', 'Produit fini', 'Outillage', 'Kit', 'Pièce')."></app-help-tooltip>
+                <app-help-tooltip text="Catégorisez votre article (ex: 'Matière première', 'Produit fini')."></app-help-tooltip>
               </div>
               <select [(ngModel)]="newArticle.type" 
                       name="type"
-                      class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                      class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
                 <option value="">Sélectionner un type...</option>
                 <option value="Matière première">Matière première</option>
                 <option value="Produit fini">Produit fini</option>
-                <option value="Outillage">Outillage</option>
-                <option value="Kit">Kit</option>
-                <option value="Pièce">Pièce</option>
               </select>
             </div>
             
             <div>
               <div class="flex items-center gap-2 mb-2">
                 <label class="block text-sm font-medium text-gray-700">Unité (optionnel)</label>
-                <app-help-tooltip text="Unité de mesure de l'article (ex: 'kg', 'L', 'unité', '%')."></app-help-tooltip>
+                <app-help-tooltip text="Unité de mesure de l'article (ex: 'kg', 'L', 'unité')."></app-help-tooltip>
               </div>
               <select [(ngModel)]="newArticle.unite" 
                       name="unite"
-                      class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                      class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
                 <option value="">Sélectionner une unité...</option>
                 <option value="kg">kg (kilogramme) - Pour les poids</option>
                 <option value="L">L (litre) - Pour les liquides</option>
@@ -372,7 +351,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                      [(ngModel)]="newArticle.quantiteInitiale" 
                      name="quantiteInitiale" 
                      value="0"
-                     class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                     class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
             </div>
             
             <div class="flex gap-4 pt-2">
@@ -380,7 +359,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
                       [disabled]="!newArticle.nom"
                       [class.opacity-50]="!newArticle.nom"
                       [class.cursor-not-allowed]="!newArticle.nom"
-                      class="flex-1 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2">
+                      class="flex-1 bg-purple-600 text-white py-3 rounded-md hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -399,7 +378,7 @@ import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-
   `,
   styles: []
 })
-export class StockComponent implements OnInit {
+export class StockDrogueComponent implements OnInit {
   stocks: Stock[] = [];
   filteredStocks: Stock[] = [];
   showEditModal = false;
@@ -431,23 +410,18 @@ export class StockComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadStocks();
-    // Écouter la recherche globale
-    window.addEventListener('globalSearch', (event: any) => {
-      this.searchQuery = event.detail.query;
-      this.applyFilters();
-    });
   }
 
   loadStocks(): void {
     this.stockService.getStocks().subscribe({
       next: (stocks) => {
-        // Exclure les articles de drogue du stock normal
-        this.stocks = stocks.filter(stock => !this.isDrogueArticle(stock.article));
+        // Filtrer uniquement les articles de drogue
+        this.stocks = stocks.filter(stock => this.isDrogueArticle(stock.article));
         this.uniqueTypes = [...new Set(this.stocks.map(s => s.article.type).filter((t): t is string => !!t))];
         this.applyFilters();
       },
       error: (err) => {
-        console.error('Erreur lors du chargement du stock', err);
+        console.error('Erreur lors du chargement du stock drogue', err);
       }
     });
   }
@@ -605,9 +579,8 @@ export class StockComponent implements OnInit {
   }
 
   showSuccessMessage(text: string = 'Stock mis à jour avec succès !'): void {
-    // Message de succès temporaire
     const message = document.createElement('div');
-    message.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in';
+    message.className = 'fixed top-4 right-4 bg-purple-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in';
     
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('class', 'w-6 h-6');
@@ -635,3 +608,4 @@ export class StockComponent implements OnInit {
     }, 3000);
   }
 }
+

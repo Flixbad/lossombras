@@ -9,80 +9,109 @@ import { StockService, Article } from '../../core/services/stock.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-4 md:space-y-6 lg:space-y-8">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Véhicules</h1>
+    <div class="space-y-6 md:space-y-8">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-emerald-800 to-teal-800 bg-clip-text text-transparent mb-2">Véhicules</h1>
+          <p class="text-gray-600 text-sm md:text-base">Gestion de votre parc automobile</p>
+        </div>
         <button (click)="showAddModal = true" 
-                class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm md:text-base">
+                class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm md:text-base font-semibold flex items-center gap-2">
+          <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
           Ajouter un véhicule
         </button>
       </div>
       
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
         <div *ngFor="let vehicule of vehicules" 
-             class="bg-white rounded-lg p-4 md:p-6 transition-all duration-300 cursor-pointer relative overflow-hidden"
-             [style.border-left]="vehicule.couleur ? '6px solid ' + getColorValue(vehicule.couleur) : '6px solid #e5e7eb'"
-             [style.box-shadow]="getBoxShadow(vehicule)"
+             class="group bg-white/80 backdrop-blur-sm rounded-2xl p-5 md:p-6 transition-all duration-300 cursor-pointer relative overflow-hidden shadow-lg hover:shadow-2xl border border-gray-100/50"
+             [style.border-left]="vehicule.couleur ? '4px solid ' + getColorValue(vehicule.couleur) : '4px solid #e5e7eb'"
              (mouseenter)="hoveredVehicule = vehicule"
              (mouseleave)="hoveredVehicule = null">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h3 class="text-xl font-semibold text-gray-800">{{ vehicule.plaque }}</h3>
-              <p class="text-sm text-gray-600">{{ vehicule.modele }}</p>
-              <div *ngIf="vehicule.couleur" class="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                   [style.backgroundColor]="getColorValue(vehicule.couleur) + '20'"
-                   [style.color]="getColorValue(vehicule.couleur)"
-                   [style.border]="'1px solid ' + getColorValue(vehicule.couleur) + '60'">
-                <span class="inline-block w-3 h-3 rounded-full mr-2" 
-                      [style.backgroundColor]="getColorValue(vehicule.couleur)"
-                      [style.border]="'1px solid ' + getColorValue(vehicule.couleur) + '80'"></span>
-                {{ vehicule.couleur }}
+             <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-400/10 to-teal-400/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+          <div class="relative z-10">
+            <div class="flex justify-between items-start mb-5">
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-gray-900 mb-1">{{ vehicule.plaque }}</h3>
+                <p class="text-sm text-gray-600 font-medium">{{ vehicule.modele }}</p>
+                <div *ngIf="vehicule.couleur" class="mt-3 inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm"
+                     [style.backgroundColor]="getColorValue(vehicule.couleur) + '15'"
+                     [style.color]="getColorValue(vehicule.couleur)"
+                     [style.border]="'1.5px solid ' + getColorValue(vehicule.couleur) + '40'">
+                  <span class="inline-block w-2.5 h-2.5 rounded-full mr-2" 
+                        [style.backgroundColor]="getColorValue(vehicule.couleur)"></span>
+                  {{ vehicule.couleur }}
+                </div>
+              </div>
+              <div class="flex gap-2 ml-3">
+                <button (click)="openEditModal(vehicule)" 
+                        class="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button (click)="deleteVehicule(vehicule.id)" 
+                        class="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
               </div>
             </div>
-            <div class="flex gap-2">
-              <button (click)="openEditModal(vehicule)" 
-                      class="text-blue-600 hover:text-blue-800 text-sm">Modifier</button>
-              <button (click)="deleteVehicule(vehicule.id)" 
-                      class="text-red-600 hover:text-red-800 text-sm">Supprimer</button>
-            </div>
-          </div>
           
-          <div class="mt-4 space-y-3">
-            <div *ngIf="vehicule.proprietaire" class="flex items-center text-sm">
-              <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-              <span class="text-gray-500 font-medium mr-2">Propriétaire:</span>
-              <span class="text-gray-800">{{ vehicule.proprietaire }}</span>
-            </div>
-            <div *ngIf="vehicule.emplacement" class="flex items-center text-sm">
-              <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-              <span class="text-gray-500 font-medium mr-2">Emplacement:</span>
-              <span class="text-gray-800">{{ vehicule.emplacement }}</span>
-            </div>
-            
-            <div class="mt-3 pt-3 border-t border-gray-200">
-              <h4 class="font-semibold text-gray-700 mb-2">Contenu:</h4>
-              <ul class="space-y-1">
-                <li *ngFor="let contenu of vehicule.contenus || []" 
-                    class="text-sm text-gray-600">
-                  {{ contenu?.article?.nom || 'N/A' }}: {{ (contenu?.quantite || '0') | number:'1.0-0' }} {{ contenu?.article?.unite || '' }}
-                </li>
-                <li *ngIf="!vehicule.contenus || vehicule.contenus.length === 0" class="text-sm text-gray-400 italic">
-                  Aucun contenu
-                </li>
-              </ul>
+            <div class="mt-5 space-y-3">
+              <div *ngIf="vehicule.proprietaire" class="flex items-center p-3 bg-gray-50 rounded-xl">
+                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                  <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 font-medium">Propriétaire</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ vehicule.proprietaire }}</p>
+                </div>
+              </div>
+              <div *ngIf="vehicule.emplacement" class="flex items-center p-3 bg-gray-50 rounded-xl">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 font-medium">Emplacement</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ vehicule.emplacement }}</p>
+                </div>
+              </div>
+              
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h4 class="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Contenu</h4>
+                <ul class="space-y-2">
+                  <li *ngFor="let contenu of vehicule.contenus || []" 
+                      class="flex items-center justify-between p-2.5 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-100">
+                    <span class="text-sm font-medium text-gray-900">{{ contenu?.article?.nom || 'N/A' }}</span>
+                    <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">
+                      {{ (contenu?.quantite || '0') | number:'1.0-0' }} {{ contenu?.article?.unite || '' }}
+                    </span>
+                  </li>
+                  <li *ngIf="!vehicule.contenus || vehicule.contenus.length === 0" class="text-center py-4 text-sm text-gray-400 italic">
+                    Aucun contenu
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </div>
       
-      <div *ngIf="showAddModal || showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <h2 class="text-2xl font-bold mb-4">{{ showEditModal ? 'Modifier' : 'Ajouter' }} un véhicule</h2>
+      <div *ngIf="showAddModal || showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
+          <div class="mb-6">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{{ showEditModal ? 'Modifier' : 'Ajouter' }} un véhicule</h2>
+            <p class="text-sm text-gray-500">Gestion des informations du véhicule</p>
+          </div>
           <form (ngSubmit)="saveVehicule()" class="space-y-4">
             <div>
               <label class="block text-sm font-medium mb-2">Plaque</label>

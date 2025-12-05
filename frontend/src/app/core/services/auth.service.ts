@@ -67,19 +67,24 @@ export class AuthService {
         this.currentUserSubject.next(user);
       } catch (e) {
         // Ignorer les erreurs de parsing
+        console.warn('Erreur de parsing du cache utilisateur', e);
       }
     }
 
     // Ensuite, charger depuis l'API pour mettre à jour
     this.http.get<User>(`${this.apiUrl}/me`).subscribe({
       next: (user) => {
-        this.currentUserSubject.next(user);
-        // Sauvegarder l'utilisateur dans localStorage pour persistance
-        if (user) {
+        if (user && user.roles && Array.isArray(user.roles)) {
+          console.debug('[AuthService] Utilisateur chargé avec rôles:', user.roles);
+          this.currentUserSubject.next(user);
+          // Sauvegarder l'utilisateur dans localStorage pour persistance
           localStorage.setItem('currentUser', JSON.stringify(user));
+        } else {
+          console.error('[AuthService] Utilisateur invalide ou sans rôles:', user);
         }
       },
       error: (err) => {
+        console.error('[AuthService] Erreur lors du chargement de l\'utilisateur:', err);
         // Si erreur 401, garder l'utilisateur en cache si disponible
         if (err.status === 401) {
           const cachedUser = localStorage.getItem('currentUser');
@@ -88,11 +93,11 @@ export class AuthService {
             this.logout();
           } else {
             // Garder l'utilisateur en cache même en cas d'erreur API
-            console.warn('Session en cache conservée');
+            console.warn('[AuthService] Session en cache conservée');
           }
         } else {
           // Pour les autres erreurs (réseau, etc.), garder l'utilisateur en cache
-          console.warn('Erreur réseau, utilisation du cache');
+          console.warn('[AuthService] Erreur réseau, utilisation du cache');
         }
       }
     });
@@ -139,5 +144,12 @@ export class AuthService {
     }
     
     return null;
+  }
+
+  // Forcer le rechargement de l'utilisateur depuis l'API
+  reloadUser(): void {
+    console.log('[AuthService] Rechargement forcé de l\'utilisateur');
+    localStorage.removeItem('currentUser'); // Supprimer le cache
+    this.loadCurrentUser(); // Recharger depuis l'API
   }
 }

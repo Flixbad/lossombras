@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { capitanGuard } from './core/guards/capitan.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { drogueGuard } from './core/guards/drogue.guard';
 
 export const routes: Routes = [
   { 
@@ -17,6 +18,11 @@ export const routes: Routes = [
     path: 'stock', 
     loadComponent: () => import('./pages/stock/stock.component').then(m => m.StockComponent), 
     canActivate: [authGuard] 
+  },
+  { 
+    path: 'stock-drogue', 
+    loadComponent: () => import('./pages/stock-drogue/stock-drogue.component').then(m => m.StockDrogueComponent), 
+    canActivate: [authGuard, drogueGuard] 
   },
   { 
     path: 'vehicules', 

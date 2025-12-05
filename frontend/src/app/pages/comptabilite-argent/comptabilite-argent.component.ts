@@ -4,25 +4,32 @@ import { FormsModule } from '@angular/forms';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { ArgentService, Argent, ArgentStats } from '../../core/services/argent.service';
+import { HelpTooltipComponent } from '../../shared/components/help-tooltip/help-tooltip.component';
 import { interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-comptabilite-argent',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, BaseChartDirective],
+  imports: [CommonModule, FormsModule, DatePipe, BaseChartDirective, HelpTooltipComponent],
   providers: [provideCharts(withDefaultRegisterables())],
   template: `
-    <div class="space-y-8">
-      <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-800">Comptabilité Financière</h1>
+    <div class="space-y-6 md:space-y-8">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-emerald-800 bg-clip-text text-transparent mb-2">Comptabilité Financière</h1>
+          <p class="text-gray-600 text-sm md:text-base">Suivi complet de vos finances</p>
+        </div>
         <button (click)="showAddModal = true" 
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 font-semibold flex items-center gap-2">
+          <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
           Ajouter une opération
         </button>
       </div>
 
       <!-- Sélection période -->
-      <div class="bg-white rounded-lg shadow p-4">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 md:p-6 border border-gray-100/50">
         <div class="flex items-center gap-4">
           <label class="text-sm font-medium text-gray-700">Période :</label>
           <select [(ngModel)]="selectedPeriod" (change)="loadData()" 
@@ -38,33 +45,76 @@ import { interval, Subscription } from 'rxjs';
       </div>
 
       <!-- Statistiques -->
-      <div *ngIf="stats" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Ajouté</h3>
-          <p class="text-3xl font-bold text-green-600">{{ stats.totalAjoute | number:'1.0-0' }} €</p>
+      <div *ngIf="stats" class="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+        <div class="group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-gray-100/50 overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-emerald-600/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="text-sm font-semibold text-gray-600 mb-1 uppercase tracking-wider">Total Ajouté</h3>
+            <p class="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-700 bg-clip-text text-transparent">{{ stats.totalAjoute | number:'1.0-0' }} €</p>
+          </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Retiré</h3>
-          <p class="text-3xl font-bold text-red-600">{{ stats.totalRetire | number:'1.0-0' }} €</p>
+        <div class="group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-gray-100/50 overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-400/20 to-red-600/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="text-sm font-semibold text-gray-600 mb-1 uppercase tracking-wider">Total Retiré</h3>
+            <p class="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">{{ stats.totalRetire | number:'1.0-0' }} €</p>
+          </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-700 mb-2">Solde</h3>
-          <p class="text-3xl font-bold" [class]="stats.solde >= 0 ? 'text-blue-600' : 'text-red-600'">
-            {{ stats.solde | number:'1.0-0' }} €
-          </p>
+        <div class="group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-gray-100/50 overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"
+               [ngClass]="stats.solde >= 0 ? 'bg-gradient-to-br from-blue-400/20 to-blue-600/10' : 'bg-gradient-to-br from-red-400/20 to-red-600/10'"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+                   [ngClass]="stats.solde >= 0 ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-red-500 to-red-600'">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="text-sm font-semibold text-gray-600 mb-1 uppercase tracking-wider">Solde</h3>
+            <p class="text-4xl font-bold bg-clip-text text-transparent"
+               [ngClass]="stats.solde >= 0 ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-red-600 to-red-700'">
+              {{ stats.solde | number:'1.0-0' }} €
+            </p>
+          </div>
         </div>
       </div>
 
       <!-- Graphiques -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">
-            {{ selectedPeriod === 'jour' ? 'Évolution par jour' : 
-               selectedPeriod === 'semaine' ? 'Évolution par semaine' : 
-               'Évolution par mois' }}
-          </h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-5 md:p-7 border border-gray-100/50">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg md:text-xl font-bold text-gray-900">
+                {{ selectedPeriod === 'jour' ? 'Évolution par jour' : 
+                   selectedPeriod === 'semaine' ? 'Évolution par semaine' : 
+                   'Évolution par mois' }}
+              </h2>
+              <p class="text-xs text-gray-500">Analyse des tendances</p>
+            </div>
+          </div>
           <div class="h-64">
             <canvas baseChart
                     [data]="lineChartData"
@@ -74,8 +124,19 @@ import { interval, Subscription } from 'rxjs';
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Répartition ajouts/retraits</h2>
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-5 md:p-7 border border-gray-100/50">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg md:text-xl font-bold text-gray-900">Répartition ajouts/retraits</h2>
+              <p class="text-xs text-gray-500">Visualisation des flux</p>
+            </div>
+          </div>
           <div class="h-64 flex items-center justify-center">
             <canvas baseChart
                     [data]="doughnutChartData"
@@ -87,42 +148,54 @@ import { interval, Subscription } from 'rxjs';
       </div>
 
       <!-- Tableau des opérations -->
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <h2 class="text-xl font-semibold text-gray-800 p-6 mb-0 border-b">Historique des opérations</h2>
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilisateur</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commentaire</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-gray-100/50">
+        <div class="p-5 md:p-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Historique des opérations</h2>
+              <p class="text-xs text-gray-500">Toutes vos transactions financières</p>
+            </div>
+          </div>
+        </div>
+        <table class="min-w-full">
+          <thead>
+            <tr class="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Montant</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Utilisateur</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Commentaire</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr *ngFor="let item of argentList">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <tbody class="divide-y divide-gray-100">
+            <tr *ngFor="let item of argentList" class="hover:bg-gray-50/50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {{ item.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span [class]="item.type === 'ajout' ? 'text-green-600' : 'text-red-600'" 
-                      class="text-sm font-medium">
+                <span [class]="item.type === 'ajout' ? 'px-3 py-1.5 bg-green-100 text-green-700' : 'px-3 py-1.5 bg-red-100 text-red-700'" 
+                      class="text-xs font-bold rounded-lg inline-block">
                   {{ item.type === 'ajout' ? 'Ajout' : 'Retrait' }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {{ item.montant | number:'1.0-0' }} €
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-bold text-gray-900">{{ item.montant | number:'1.0-0' }} €</span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {{ item.user?.pseudo || item.user?.email || '-' }}
               </td>
-              <td class="px-6 py-4 text-sm text-gray-500">
+              <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
                 {{ item.commentaire || '-' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <button (click)="deleteArgent(item.id)" 
-                        class="text-red-600 hover:text-red-800">Supprimer</button>
+                        class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition-colors">Supprimer</button>
               </td>
             </tr>
           </tbody>
@@ -130,35 +203,136 @@ import { interval, Subscription } from 'rxjs';
       </div>
 
       <!-- Modal ajout opération -->
-      <div *ngIf="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 max-w-md w-full">
-          <h2 class="text-2xl font-bold mb-4">Ajouter une opération</h2>
+      <div *ngIf="showAddModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
+          <div class="flex justify-between items-start mb-6">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 mb-1">Ajouter une opération</h2>
+              <p class="text-sm text-gray-500">Enregistrer une transaction</p>
+            </div>
+            <button (click)="showAddModal = false" class="text-gray-400 hover:text-gray-600" aria-label="Fermer">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Solde actuel -->
+          <div *ngIf="stats" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-5 mb-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                   [class.bg-gradient-to-br]="true"
+                   [class.from-blue-500]="stats.solde >= 0"
+                   [class.to-blue-600]="stats.solde >= 0"
+                   [class.from-red-500]="stats.solde < 0"
+                   [class.to-red-600]="stats.solde < 0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-600">Solde actuel</p>
+                <p class="text-2xl font-bold" [class.text-blue-700]="stats.solde >= 0" [class.text-red-700]="stats.solde < 0">
+                  {{ stats.solde | number:'1.0-0' }} €
+                </p>
+              </div>
+            </div>
+          </div>
+
           <form (ngSubmit)="createArgent()" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium mb-2">Type d'opération</label>
-              <select [(ngModel)]="newOperation.type" name="type" required
-                      class="w-full px-4 py-2 border rounded-md">
+              <div class="flex items-center gap-2 mb-2">
+                <label class="block text-sm font-medium text-gray-700">Type d'opération</label>
+                <app-help-tooltip text="Sélectionnez 'Ajout' pour ajouter de l'argent (ventes, revenus) ou 'Retrait' pour en retirer (achats, dépenses)."></app-help-tooltip>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" 
+                        (click)="newOperation.type = 'ajout'"
+                        [class]="newOperation.type === 'ajout' ? 'bg-green-600 text-white border-2 border-green-600' : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-green-500'"
+                        class="px-4 py-3 rounded-md font-medium transition-all flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajout
+                </button>
+                <button type="button" 
+                        (click)="newOperation.type = 'retrait'"
+                        [class]="newOperation.type === 'retrait' ? 'bg-red-600 text-white border-2 border-red-600' : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-red-500'"
+                        class="px-4 py-3 rounded-md font-medium transition-all flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                  </svg>
+                  Retrait
+                </button>
+              </div>
+              <select [(ngModel)]="newOperation.type" name="type" required class="hidden">
                 <option value="ajout">Ajout d'argent</option>
                 <option value="retrait">Retrait d'argent</option>
               </select>
             </div>
+            
             <div>
-              <label class="block text-sm font-medium mb-2">Montant (€)</label>
-              <input type="number" step="1" min="1" [(ngModel)]="newOperation.montant" name="montant" required
-                     class="w-full px-4 py-2 border rounded-md">
+              <div class="flex items-center gap-2 mb-2">
+                <label class="block text-sm font-medium text-gray-700">Montant (€) *</label>
+                <app-help-tooltip text="Entrez le montant en euros. Seuls les nombres entiers sont acceptés (pas de centimes)."></app-help-tooltip>
+              </div>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">€</span>
+                <input type="number" 
+                       step="1" 
+                       min="1" 
+                       [(ngModel)]="newOperation.montant" 
+                       name="montant" 
+                       required
+                       (input)="calculateNewBalance()"
+                       placeholder="0"
+                       class="w-full pl-10 pr-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+              </div>
+              
+              <!-- Prévisualisation -->
+              <div *ngIf="newOperation.montant && stats" 
+                   class="mt-3 p-3 rounded-lg border-2"
+                   [class.bg-green-50]="newOperation.type === 'ajout'"
+                   [class.border-green-200]="newOperation.type === 'ajout'"
+                   [class.bg-red-50]="newOperation.type === 'retrait'"
+                   [class.border-red-200]="newOperation.type === 'retrait'">
+                <p class="text-sm font-medium mb-1">
+                  {{ newOperation.type === 'ajout' ? 'Solde après ajout :' : 'Solde après retrait :' }}
+                </p>
+                <p class="text-lg font-bold"
+                   [class.text-green-700]="newOperation.type === 'ajout'"
+                   [class.text-red-700]="newOperation.type === 'retrait'">
+                  {{ getNewBalance() | number:'1.0-0' }} €
+                </p>
+              </div>
             </div>
+            
             <div>
-              <label class="block text-sm font-medium mb-2">Commentaire (pourquoi ajouter/retirer)</label>
-              <textarea [(ngModel)]="newOperation.commentaire" name="commentaire" rows="3"
-                        placeholder="Ex: Vente de produits, Achat de matériel, etc."
-                        class="w-full px-4 py-2 border rounded-md"></textarea>
+              <div class="flex items-center gap-2 mb-2">
+                <label class="block text-sm font-medium text-gray-700">Commentaire (optionnel)</label>
+                <app-help-tooltip text="Décrivez la raison de cette opération (ex: 'Vente de produits', 'Achat de matériel', 'Paiement facture')."></app-help-tooltip>
+              </div>
+              <textarea [(ngModel)]="newOperation.commentaire" 
+                        name="commentaire" 
+                        rows="3"
+                        placeholder="Ex: Vente de produits, Achat de matériel, Paiement facture..."
+                        class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
             </div>
-            <div class="flex gap-4">
-              <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+            
+            <div class="flex gap-4 pt-2">
+              <button type="submit" 
+                      [disabled]="!newOperation.montant || newOperation.montant <= 0"
+                      [class.opacity-50]="!newOperation.montant || newOperation.montant <= 0"
+                      [class.cursor-not-allowed]="!newOperation.montant || newOperation.montant <= 0"
+                      class="flex-1 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
                 Enregistrer
               </button>
-              <button type="button" (click)="showAddModal = false" 
-                      class="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400">
+              <button type="button" 
+                      (click)="showAddModal = false" 
+                      class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-md hover:bg-gray-400 transition-colors font-medium">
                 Annuler
               </button>
             </div>
@@ -338,6 +512,19 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
     };
   }
 
+  calculateNewBalance(): void {
+    // Cette méthode est appelée lors de la saisie pour recalculer
+  }
+
+  getNewBalance(): number {
+    if (!this.stats || !this.newOperation.montant) return this.stats?.solde || 0;
+    if (this.newOperation.type === 'ajout') {
+      return this.stats.solde + this.newOperation.montant;
+    } else {
+      return this.stats.solde - this.newOperation.montant;
+    }
+  }
+
   createArgent(): void {
     this.argentService.createArgent(
       this.newOperation.type,
@@ -346,6 +533,7 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.showAddModal = false;
+        this.showSuccessMessage();
         this.newOperation = { type: 'ajout', montant: 0, commentaire: '' };
         this.loadData(); // Recharge automatiquement les données
       },
@@ -358,6 +546,24 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  showSuccessMessage(): void {
+    // Message de succès temporaire
+    const message = document.createElement('div');
+    message.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3';
+    message.innerHTML = `
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <span class="font-medium">Opération enregistrée avec succès !</span>
+    `;
+    document.body.appendChild(message);
+    setTimeout(() => {
+      message.style.opacity = '0';
+      message.style.transition = 'opacity 0.3s ease-out';
+      setTimeout(() => message.remove(), 300);
+    }, 3000);
   }
 
   deleteArgent(id: number): void {

@@ -98,13 +98,29 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
     
+    if (!this.email || !this.password) {
+      this.error = 'Veuillez remplir tous les champs';
+      this.loading = false;
+      return;
+    }
+    
     this.authService.login(this.email, this.password).subscribe({
       next: () => {
+        this.loading = false;
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
-        this.error = 'Email ou mot de passe incorrect';
+        console.error('Erreur de connexion:', err);
         this.loading = false;
+        if (err.status === 401) {
+          this.error = 'Email ou mot de passe incorrect';
+        } else if (err.status === 0) {
+          this.error = 'Impossible de joindre le serveur. Vérifiez que le backend est démarré.';
+        } else if (err.error?.message) {
+          this.error = err.error.message;
+        } else {
+          this.error = 'Erreur lors de la connexion. Veuillez réessayer.';
+        }
       }
     });
   }
@@ -113,15 +129,44 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
     
+    if (!this.registerData.email || !this.registerData.password) {
+      this.error = 'L\'email et le mot de passe sont obligatoires';
+      this.loading = false;
+      return;
+    }
+    
     this.authService.register(this.registerData).subscribe({
-      next: () => {
-        this.error = 'Inscription réussie ! Vous pouvez vous connecter.';
-        this.showRegister = false;
+      next: (response) => {
         this.loading = false;
+        this.error = 'Inscription réussie ! Vous pouvez maintenant vous connecter.';
+        this.showRegister = false;
+        // Réinitialiser le formulaire
+        this.registerData = {
+          email: '',
+          password: '',
+          pseudo: '',
+          prenom: '',
+          nom: '',
+          age: null,
+          telephone: ''
+        };
       },
       error: (err) => {
-        this.error = 'Erreur lors de l\'inscription';
+        console.error('Erreur d\'inscription:', err);
         this.loading = false;
+        if (err.status === 0) {
+          this.error = 'Impossible de joindre le serveur. Vérifiez que le backend est démarré.';
+        } else if (err.error?.errors) {
+          // Erreurs de validation Symfony
+          const errors = typeof err.error.errors === 'string' 
+            ? err.error.errors 
+            : JSON.stringify(err.error.errors);
+          this.error = 'Erreurs de validation : ' + errors;
+        } else if (err.error?.message) {
+          this.error = err.error.message;
+        } else {
+          this.error = 'Erreur lors de l\'inscription. Veuillez vérifier vos informations.';
+        }
       }
     });
   }
