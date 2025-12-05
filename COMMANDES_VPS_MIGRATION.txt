@@ -1,0 +1,33 @@
+# Commandes à exécuter sur le VPS pour résoudre le problème de migration
+
+# ============================================
+# SOLUTION RAPIDE : Créer uniquement la table argent_archive
+# ============================================
+
+cd /var/www/lossombras/backend
+
+# 1. Créer la table argent_archive manuellement
+php bin/console doctrine:query:sql "CREATE TABLE IF NOT EXISTS argent_archive (
+    id INT AUTO_INCREMENT NOT NULL,
+    solde NUMERIC(10, 2) NOT NULL,
+    date_cloture DATETIME NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+    semaine VARCHAR(10) NOT NULL,
+    commentaire LONGTEXT DEFAULT NULL,
+    closed_by_id INT DEFAULT NULL,
+    created_at DATETIME NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+    INDEX IDX_ARCHIVE_CLOSED_BY (closed_by_id),
+    PRIMARY KEY(id)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB"
+
+# 2. Ajouter la clé étrangère
+php bin/console doctrine:query:sql "ALTER TABLE argent_archive ADD CONSTRAINT FK_ARCHIVE_CLOSED_BY FOREIGN KEY (closed_by_id) REFERENCES \`user\` (id)"
+
+# 3. Marquer la migration comme exécutée
+php bin/console doctrine:migrations:version DoctrineMigrations\\Version20251205112540 --add --no-interaction
+
+# 4. Vérifier que ça a fonctionné
+php bin/console doctrine:query:sql "SHOW TABLES LIKE 'argent_archive'"
+
+# 5. Vérifier l'état des migrations
+php bin/console doctrine:migrations:status
+
