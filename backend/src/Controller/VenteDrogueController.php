@@ -139,9 +139,12 @@ class VenteDrogueController extends AbstractController
         $vente = new VenteDrogue();
         $vente->setVendeur($vendeur);
         $vente->setNbPochons((int) $nbPochons);
-        $vente->setPrixVenteUnitaire((string) $prixVenteUnitaire);
-        $vente->setPrixAchatUnitaire((string) $prixAchatUnitaire);
+        $vente->setPrixVenteUnitaire(number_format((float) $prixVenteUnitaire, 2, '.', ''));
+        $vente->setPrixAchatUnitaire(number_format((float) $prixAchatUnitaire, 2, '.', ''));
         $vente->setCommentaire($commentaire);
+        
+        // Calculer les bénéfices après avoir défini toutes les valeurs
+        $vente->calculerBenefices();
 
         $em->persist($vente);
         $em->flush();

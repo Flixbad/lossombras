@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\VenteDrogueRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\PrePersist;
 
 #[ORM\Entity(repositoryClass: VenteDrogueRepository::class)]
 class VenteDrogue
@@ -72,7 +73,6 @@ class VenteDrogue
     public function setNbPochons(int $nbPochons): static
     {
         $this->nbPochons = $nbPochons;
-        $this->calculerBenefices();
         return $this;
     }
 
@@ -84,7 +84,6 @@ class VenteDrogue
     public function setPrixVenteUnitaire(string $prixVenteUnitaire): static
     {
         $this->prixVenteUnitaire = $prixVenteUnitaire;
-        $this->calculerBenefices();
         return $this;
     }
 
@@ -96,7 +95,6 @@ class VenteDrogue
     public function setPrixAchatUnitaire(string $prixAchatUnitaire): static
     {
         $this->prixAchatUnitaire = $prixAchatUnitaire;
-        $this->calculerBenefices();
         return $this;
     }
 
@@ -137,7 +135,7 @@ class VenteDrogue
         return $this;
     }
 
-    private function calculerBenefices(): void
+    public function calculerBenefices(): void
     {
         if ($this->nbPochons === null || $this->prixVenteUnitaire === null || $this->prixAchatUnitaire === null) {
             return;
@@ -147,13 +145,23 @@ class VenteDrogue
         $beneficeUnitaire = (float) $this->prixVenteUnitaire - (float) $this->prixAchatUnitaire;
         
         // Bénéfice total
-        $this->benefice = (string) ($beneficeUnitaire * $this->nbPochons);
+        $beneficeTotal = $beneficeUnitaire * $this->nbPochons;
+        $this->benefice = number_format($beneficeTotal, 2, '.', '');
         
         // Commission vendeur : 5% du bénéfice
-        $this->commission = (string) ((float) $this->benefice * 0.05);
+        $commissionTotal = $beneficeTotal * 0.05;
+        $this->commission = number_format($commissionTotal, 2, '.', '');
         
         // Bénéfice pour le groupe = bénéfice - commission
-        $this->beneficeGroupe = (string) ((float) $this->benefice - (float) $this->commission);
+        $beneficeGroupeTotal = $beneficeTotal - $commissionTotal;
+        $this->beneficeGroupe = number_format($beneficeGroupeTotal, 2, '.', '');
+    }
+
+    #[PrePersist]
+    public function onPrePersist(): void
+    {
+        // S'assurer que les bénéfices sont calculés avant la sauvegarde
+        $this->calculerBenefices();
     }
 }
 
