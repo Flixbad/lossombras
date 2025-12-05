@@ -19,14 +19,14 @@ class VenteDrogue
     #[ORM\JoinColumn(nullable: false)]
     private ?User $vendeur = null;
 
-    #[ORM\Column]
-    private ?int $nbPochons = null;
-
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?string $prixVenteUnitaire = null;
+    private ?string $montantVenteTotal = null; // Recette complète (ex: 21,000$)
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $prixAchatUnitaire = null; // 625$ par défaut
+    
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
+    private ?string $coutAchatTotal = null; // Coût total d'achat calculé automatiquement
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $benefice = null; // Calculé automatiquement
@@ -46,7 +46,7 @@ class VenteDrogue
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->prixAchatUnitaire = '625.00'; // Prix d'achat par défaut
+        $this->prixAchatUnitaire = '625.00'; // Prix d'achat par pochon par défaut
     }
 
     public function getId(): ?int
@@ -65,25 +65,14 @@ class VenteDrogue
         return $this;
     }
 
-    public function getNbPochons(): ?int
+    public function getMontantVenteTotal(): ?string
     {
-        return $this->nbPochons;
+        return $this->montantVenteTotal;
     }
 
-    public function setNbPochons(int $nbPochons): static
+    public function setMontantVenteTotal(string $montantVenteTotal): static
     {
-        $this->nbPochons = $nbPochons;
-        return $this;
-    }
-
-    public function getPrixVenteUnitaire(): ?string
-    {
-        return $this->prixVenteUnitaire;
-    }
-
-    public function setPrixVenteUnitaire(string $prixVenteUnitaire): static
-    {
-        $this->prixVenteUnitaire = $prixVenteUnitaire;
+        $this->montantVenteTotal = $montantVenteTotal;
         return $this;
     }
 
@@ -96,6 +85,30 @@ class VenteDrogue
     {
         $this->prixAchatUnitaire = $prixAchatUnitaire;
         return $this;
+    }
+
+    public function getCoutAchatTotal(): ?string
+    {
+        return $this->coutAchatTotal;
+    }
+
+    public function setCoutAchatTotal(?string $coutAchatTotal): static
+    {
+        $this->coutAchatTotal = $coutAchatTotal;
+        return $this;
+    }
+    
+    /**
+     * Calcule le nombre approximatif de pochons vendus
+     */
+    public function getNbPochonsApproximatif(): ?float
+    {
+        if (!$this->montantVenteTotal || !$this->prixAchatUnitaire) {
+            return null;
+        }
+        // Calcul approximatif basé sur un prix de vente moyen entre 825-850$
+        $prixVenteMoyen = 837.50; // (825 + 850) / 2
+        return round((float) $this->montantVenteTotal / $prixVenteMoyen, 2);
     }
 
     public function getBenefice(): ?string
@@ -137,15 +150,24 @@ class VenteDrogue
 
     public function calculerBenefices(): void
     {
-        if ($this->nbPochons === null || $this->prixVenteUnitaire === null || $this->prixAchatUnitaire === null) {
+        if ($this->montantVenteTotal === null || $this->prixAchatUnitaire === null) {
             return;
         }
 
-        // Bénéfice par pochon
-        $beneficeUnitaire = (float) $this->prixVenteUnitaire - (float) $this->prixAchatUnitaire;
+        $montantVente = (float) $this->montantVenteTotal;
+        $prixAchat = (float) $this->prixAchatUnitaire;
         
-        // Bénéfice total
-        $beneficeTotal = $beneficeUnitaire * $this->nbPochons;
+        // Calculer le nombre approximatif de pochons vendus
+        // Prix de vente moyen estimé entre 825-850$ = 837.50$
+        $prixVenteMoyen = 837.50;
+        $nbPochonsApproximatif = $montantVente / $prixVenteMoyen;
+        
+        // Coût total d'achat
+        $coutAchat = $nbPochonsApproximatif * $prixAchat;
+        $this->coutAchatTotal = number_format($coutAchat, 2, '.', '');
+        
+        // Bénéfice total = recette totale - coût d'achat
+        $beneficeTotal = $montantVente - $coutAchat;
         $this->benefice = number_format($beneficeTotal, 2, '.', '');
         
         // Commission vendeur : 5% du bénéfice

@@ -191,8 +191,8 @@ import { interval, Subscription } from 'rxjs';
             <p class="text-2xl font-bold text-gray-900">{{ venteDrogueStats.global.totalVentes }}</p>
           </div>
           <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-purple-100">
-            <p class="text-xs text-gray-600 mb-1">Total pochons</p>
-            <p class="text-2xl font-bold text-gray-900">{{ venteDrogueStats.global.totalPochons }}</p>
+            <p class="text-xs text-gray-600 mb-1">Total recette</p>
+            <p class="text-2xl font-bold text-blue-600">{{ venteDrogueStats.global.totalRecette | number:'1.0-2' }} €</p>
           </div>
           <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-purple-100">
             <p class="text-xs text-gray-600 mb-1">Total commissions</p>
@@ -213,7 +213,7 @@ import { interval, Subscription } from 'rxjs';
                 <tr class="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200">
                   <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Vendeur</th>
                   <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Nb ventes</th>
-                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Pochons vendus</th>
+                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Recette totale</th>
                   <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Commission totale</th>
                   <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Bénéfice groupe</th>
                 </tr>
@@ -224,9 +224,47 @@ import { interval, Subscription } from 'rxjs';
                     {{ stat.vendeur.pseudo || stat.vendeur.email }}
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-600">{{ stat.nbVentes }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-600">{{ stat.totalPochons }}</td>
+                  <td class="px-4 py-3 text-sm font-medium text-blue-600">{{ stat.totalRecette | number:'1.0-2' }} €</td>
                   <td class="px-4 py-3 text-sm font-bold text-purple-600">{{ stat.totalCommission | number:'1.0-2' }} €</td>
                   <td class="px-4 py-3 text-sm font-bold text-green-600">{{ stat.totalBeneficeGroupe | number:'1.0-2' }} €</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Liste des ventes récentes -->
+        <div *ngIf="ventesDrogue && ventesDrogue.length > 0" class="p-5 md:p-6 border-t border-purple-200">
+          <h3 class="text-lg font-bold text-gray-900 mb-4">Ventes récentes</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead>
+                <tr class="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200">
+                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Date</th>
+                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Vendeur</th>
+                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Recette</th>
+                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Commission</th>
+                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Bénéfice groupe</th>
+                  <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-purple-100">
+                <tr *ngFor="let vente of ventesDrogue" class="hover:bg-purple-50/50 transition-colors">
+                  <td class="px-4 py-3 text-sm text-gray-600">
+                    {{ vente.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </td>
+                  <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                    {{ vente.vendeur?.pseudo || vente.vendeur?.email }}
+                  </td>
+                  <td class="px-4 py-3 text-sm font-medium text-blue-600">{{ vente.montantVenteTotal | number:'1.0-2' }} €</td>
+                  <td class="px-4 py-3 text-sm font-bold text-purple-600">{{ vente.commission | number:'1.0-2' }} €</td>
+                  <td class="px-4 py-3 text-sm font-bold text-green-600">{{ vente.beneficeGroupe | number:'1.0-2' }} €</td>
+                  <td class="px-4 py-3 text-sm">
+                    <button (click)="deleteVenteDrogue(vente.id)" 
+                            class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition-colors text-xs">
+                      Supprimer
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -459,6 +497,7 @@ import { interval, Subscription } from 'rxjs';
             <p class="text-xs text-gray-600 mt-3">
               ⚠️ Cette action va :<br>
               • Archiver le solde actuel ({{ stats?.solde || 0 | number:'1.0-0' }} €)<br>
+              • Supprimer toutes les ventes de drogue<br>
               • Supprimer toutes les opérations de l'historique<br>
               • Créer une nouvelle opération "ajout" avec le solde reporté<br>
               • Réinitialiser l'historique pour la nouvelle semaine
@@ -526,23 +565,21 @@ import { interval, Subscription } from 'rxjs';
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de pochons *</label>
-              <input type="number" [(ngModel)]="newVente.nbPochons" name="nbPochons" required min="1" step="1"
+              <label class="block text-sm font-medium text-gray-700 mb-2">Recette complète (€) *</label>
+              <input type="number" [(ngModel)]="newVente.montantVenteTotal" name="montantVenteTotal" required min="1" step="0.01"
                      (input)="calculateVentePreview()"
+                     placeholder="Ex: 21000"
                      class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Prix de vente unitaire (€) *</label>
-              <input type="number" [(ngModel)]="newVente.prixVenteUnitaire" name="prixVenteUnitaire" required min="625" step="1"
-                     (input)="calculateVentePreview()"
-                     placeholder="825-850"
-                     class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-              <p class="text-xs text-gray-500 mt-1">Prix d'achat : 625€ (fixe)</p>
+              <p class="text-xs text-gray-500 mt-1">Montant total des ventes (ex: 21,000$ pour toutes les ventes)</p>
+              <p class="text-xs text-gray-500">Prix d'achat par pochon : 625€ (fixe)</p>
             </div>
 
             <div *ngIf="ventePreview" class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4 space-y-2">
               <h4 class="font-semibold text-gray-900 mb-2">Prévisualisation</h4>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Coût d'achat estimé :</span>
+                <span class="font-medium text-gray-700">{{ ventePreview.coutAchat | number:'1.0-2' }} €</span>
+              </div>
               <div class="flex justify-between text-sm">
                 <span class="text-gray-600">Bénéfice total :</span>
                 <span class="font-bold text-gray-900">{{ ventePreview.benefice | number:'1.0-2' }} €</span>
@@ -566,8 +603,8 @@ import { interval, Subscription } from 'rxjs';
 
             <div class="flex gap-4 pt-2">
               <button type="submit" 
-                      [disabled]="!newVente.vendeurId || !newVente.nbPochons || !newVente.prixVenteUnitaire || creatingVente"
-                      [class.opacity-50]="!newVente.vendeurId || !newVente.nbPochons || !newVente.prixVenteUnitaire || creatingVente"
+                      [disabled]="!newVente.vendeurId || !newVente.montantVenteTotal || creatingVente"
+                      [class.opacity-50]="!newVente.vendeurId || !newVente.montantVenteTotal || creatingVente"
                       class="flex-1 bg-purple-600 text-white py-3 rounded-md hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2">
                 <svg *ngIf="creatingVente" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -706,15 +743,16 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
   };
 
   venteDrogueStats: VenteDrogueStats | null = null;
+  ventesDrogue: VenteDrogue[] = [];
   showVenteDrogueModal = false;
   creatingVente = false;
+  deletingVente: { [key: number]: boolean } = {};
   users: User[] = [];
-  ventePreview: { benefice: number; commission: number; beneficeGroupe: number } | null = null;
+  ventePreview: { benefice: number; commission: number; beneficeGroupe: number; coutAchat: number } | null = null;
 
   newVente = {
     vendeurId: null as number | null,
-    nbPochons: 1,
-    prixVenteUnitaire: 825,
+    montantVenteTotal: 0,
     prixAchatUnitaire: 625,
     commentaire: ''
   };
@@ -954,6 +992,16 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
         console.error('Erreur lors du chargement des stats ventes drogue', err);
       }
     });
+    
+    // Charger aussi la liste des ventes
+    this.venteDrogueService.getVentes().subscribe({
+      next: (ventes) => {
+        this.ventesDrogue = ventes;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des ventes', err);
+      }
+    });
   }
 
   loadUsers(): void {
@@ -968,33 +1016,47 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
   }
 
   calculateVentePreview(): void {
-    if (!this.newVente.nbPochons || !this.newVente.prixVenteUnitaire) {
+    if (!this.newVente.montantVenteTotal || this.newVente.montantVenteTotal <= 0) {
       this.ventePreview = null;
       return;
     }
 
-    const beneficeUnitaire = this.newVente.prixVenteUnitaire - this.newVente.prixAchatUnitaire;
-    const benefice = beneficeUnitaire * this.newVente.nbPochons;
-    const commission = benefice * 0.05; // 5%
+    const montantVente = this.newVente.montantVenteTotal;
+    const prixAchat = this.newVente.prixAchatUnitaire;
+    
+    // Prix de vente moyen estimé entre 825-850$ = 837.50$
+    const prixVenteMoyen = 837.50;
+    const nbPochonsApproximatif = montantVente / prixVenteMoyen;
+    
+    // Coût total d'achat
+    const coutAchat = nbPochonsApproximatif * prixAchat;
+    
+    // Bénéfice total = recette totale - coût d'achat
+    const benefice = montantVente - coutAchat;
+    
+    // Commission vendeur : 5% du bénéfice
+    const commission = benefice * 0.05;
+    
+    // Bénéfice groupe = bénéfice - commission
     const beneficeGroupe = benefice - commission;
 
     this.ventePreview = {
       benefice: benefice,
       commission: commission,
-      beneficeGroupe: beneficeGroupe
+      beneficeGroupe: beneficeGroupe,
+      coutAchat: coutAchat
     };
   }
 
   createVenteDrogue(): void {
-    if (!this.newVente.vendeurId || !this.newVente.nbPochons || !this.newVente.prixVenteUnitaire) {
+    if (!this.newVente.vendeurId || !this.newVente.montantVenteTotal) {
       return;
     }
 
     this.creatingVente = true;
     this.venteDrogueService.createVente({
       vendeurId: this.newVente.vendeurId,
-      nbPochons: this.newVente.nbPochons,
-      prixVenteUnitaire: this.newVente.prixVenteUnitaire,
+      montantVenteTotal: this.newVente.montantVenteTotal,
       prixAchatUnitaire: this.newVente.prixAchatUnitaire,
       commentaire: this.newVente.commentaire || undefined
     }).subscribe({
@@ -1003,8 +1065,7 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
         this.creatingVente = false;
         this.newVente = {
           vendeurId: null,
-          nbPochons: 1,
-          prixVenteUnitaire: 825,
+          montantVenteTotal: 0,
           prixAchatUnitaire: 625,
           commentaire: ''
         };
@@ -1040,5 +1101,26 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
       message.style.transition = 'opacity 0.3s ease-out';
       setTimeout(() => message.remove(), 300);
     }, 3000);
+  }
+
+  deleteVenteDrogue(id: number): void {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette vente ? Les entrées associées dans la comptabilité seront également supprimées.')) {
+      return;
+    }
+
+    this.deletingVente[id] = true;
+    this.venteDrogueService.deleteVente(id).subscribe({
+      next: () => {
+        this.deletingVente[id] = false;
+        this.showSuccessMessage('Vente supprimée avec succès !');
+        this.loadData(); // Recharge la comptabilité argent
+        this.loadVenteDrogueStats(); // Recharge les stats ventes
+      },
+      error: (err) => {
+        this.deletingVente[id] = false;
+        console.error('Erreur lors de la suppression de la vente', err);
+        alert(err.error?.error || 'Erreur lors de la suppression de la vente');
+      }
+    });
   }
 }

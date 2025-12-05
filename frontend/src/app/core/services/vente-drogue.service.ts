@@ -9,9 +9,10 @@ export interface VenteDrogue {
     pseudo?: string;
     email: string;
   };
-  nbPochons: number;
-  prixVenteUnitaire: string;
+  montantVenteTotal: string;
   prixAchatUnitaire: string;
+  coutAchatTotal?: string;
+  nbPochonsApproximatif?: number;
   benefice: string;
   commission: string;
   beneficeGroupe: string;
@@ -22,7 +23,8 @@ export interface VenteDrogue {
 export interface VenteDrogueStats {
   global: {
     totalVentes: number;
-    totalPochons: number;
+    totalRecette: string;
+    totalPochonsApproximatif?: number;
     totalCommissions: string;
     totalBeneficeGroupe: string;
   };
@@ -33,7 +35,8 @@ export interface VenteDrogueStats {
       email: string;
     };
     nbVentes: number;
-    totalPochons: number;
+    totalRecette: number;
+    totalPochonsApproximatif?: number;
     totalCommission: number;
     totalBeneficeGroupe: number;
   }>;
@@ -41,8 +44,7 @@ export interface VenteDrogueStats {
 
 export interface CreateVenteDrogueRequest {
   vendeurId: number;
-  nbPochons: number;
-  prixVenteUnitaire: number;
+  montantVenteTotal: number;
   prixAchatUnitaire?: number;
   commentaire?: string;
 }

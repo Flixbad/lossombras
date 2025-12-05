@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\VenteDrogue;
 use App\Entity\Argent;
 use App\Repository\VenteDrogueRepository;
+use App\Repository\ArgentRepository;
 use App\Repository\UserRepository;
 use App\Service\DateFormatterService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,9 +35,10 @@ class VenteDrogueController extends AbstractController
                     'pseudo' => $vendeur->getPseudo(),
                     'email' => $vendeur->getEmail(),
                 ] : null,
-                'nbPochons' => $vente->getNbPochons(),
-                'prixVenteUnitaire' => $vente->getPrixVenteUnitaire(),
+                'montantVenteTotal' => $vente->getMontantVenteTotal(),
                 'prixAchatUnitaire' => $vente->getPrixAchatUnitaire(),
+                'coutAchatTotal' => $vente->getCoutAchatTotal(),
+                'nbPochonsApproximatif' => $vente->getNbPochonsApproximatif(),
                 'benefice' => $vente->getBenefice(),
                 'commission' => $vente->getCommission(),
                 'beneficeGroupe' => $vente->getBeneficeGroupe(),
@@ -57,7 +59,8 @@ class VenteDrogueController extends AbstractController
         
         // Stats globales
         $totalVentes = count($ventes);
-        $totalPochons = array_sum(array_map(fn($v) => $v->getNbPochons(), $ventes));
+        $totalRecette = array_sum(array_map(fn($v) => (float) $v->getMontantVenteTotal(), $ventes));
+        $totalPochonsApproximatif = array_sum(array_map(fn($v) => $v->getNbPochonsApproximatif() ?? 0, $ventes));
         $totalCommissions = array_sum(array_map(fn($v) => (float) $v->getCommission(), $ventes));
         $totalBeneficeGroupe = array_sum(array_map(fn($v) => (float) $v->getBeneficeGroupe(), $ventes));
 
@@ -77,14 +80,16 @@ class VenteDrogueController extends AbstractController
                         'email' => $vente->getVendeur()->getEmail(),
                     ],
                     'nbVentes' => 0,
-                    'totalPochons' => 0,
+                    'totalRecette' => 0,
+                    'totalPochonsApproximatif' => 0,
                     'totalCommission' => 0,
                     'totalBeneficeGroupe' => 0,
                 ];
             }
 
             $ventesParVendeur[$vendeurId]['nbVentes']++;
-            $ventesParVendeur[$vendeurId]['totalPochons'] += $vente->getNbPochons();
+            $ventesParVendeur[$vendeurId]['totalRecette'] += (float) $vente->getMontantVenteTotal();
+            $ventesParVendeur[$vendeurId]['totalPochonsApproximatif'] += $vente->getNbPochonsApproximatif() ?? 0;
             $ventesParVendeur[$vendeurId]['totalCommission'] += (float) $vente->getCommission();
             $ventesParVendeur[$vendeurId]['totalBeneficeGroupe'] += (float) $vente->getBeneficeGroupe();
         }
@@ -95,7 +100,8 @@ class VenteDrogueController extends AbstractController
         return new JsonResponse([
             'global' => [
                 'totalVentes' => $totalVentes,
-                'totalPochons' => $totalPochons,
+                'totalRecette' => (string) round($totalRecette, 2),
+                'totalPochonsApproximatif' => round($totalPochonsApproximatif, 2),
                 'totalCommissions' => (string) round($totalCommissions, 2),
                 'totalBeneficeGroupe' => (string) round($totalBeneficeGroupe, 2),
             ],
@@ -113,8 +119,7 @@ class VenteDrogueController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         $vendeurId = $data['vendeurId'] ?? null;
-        $nbPochons = $data['nbPochons'] ?? null;
-        $prixVenteUnitaire = $data['prixVenteUnitaire'] ?? null;
+        $montantVenteTotal = $data['montantVenteTotal'] ?? null;
         $prixAchatUnitaire = $data['prixAchatUnitaire'] ?? 625.00;
         $commentaire = $data['commentaire'] ?? null;
 
@@ -122,12 +127,8 @@ class VenteDrogueController extends AbstractController
             return new JsonResponse(['error' => 'Vendeur requis'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!$nbPochons || $nbPochons <= 0) {
-            return new JsonResponse(['error' => 'Nombre de pochons invalide'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (!$prixVenteUnitaire || $prixVenteUnitaire <= 0) {
-            return new JsonResponse(['error' => 'Prix de vente invalide'], Response::HTTP_BAD_REQUEST);
+        if (!$montantVenteTotal || $montantVenteTotal <= 0) {
+            return new JsonResponse(['error' => 'Montant de vente total invalide'], Response::HTTP_BAD_REQUEST);
         }
 
         $vendeur = $userRepo->find($vendeurId);
@@ -138,8 +139,7 @@ class VenteDrogueController extends AbstractController
         // Créer la vente
         $vente = new VenteDrogue();
         $vente->setVendeur($vendeur);
-        $vente->setNbPochons((int) $nbPochons);
-        $vente->setPrixVenteUnitaire(number_format((float) $prixVenteUnitaire, 2, '.', ''));
+        $vente->setMontantVenteTotal(number_format((float) $montantVenteTotal, 2, '.', ''));
         $vente->setPrixAchatUnitaire(number_format((float) $prixAchatUnitaire, 2, '.', ''));
         $vente->setCommentaire($commentaire);
         
@@ -155,8 +155,9 @@ class VenteDrogueController extends AbstractController
         $argentBenefice->setType('ajout');
         $argentBenefice->setMontant($vente->getBeneficeGroupe());
         $argentBenefice->setCommentaire(sprintf(
-            'Vente drogue - %d pochon(s) par %s (Bénéfice groupe)',
-            $vente->getNbPochons(),
+            'Vente drogue - %s$ (Recette: %s$) par %s (Bénéfice groupe)',
+            $vente->getBeneficeGroupe(),
+            $vente->getMontantVenteTotal(),
             $vendeur->getPseudo() ?? $vendeur->getEmail()
         ));
         $argentBenefice->setUser($this->getUser());
@@ -167,8 +168,9 @@ class VenteDrogueController extends AbstractController
         $argentCommission->setType('retrait');
         $argentCommission->setMontant($vente->getCommission());
         $argentCommission->setCommentaire(sprintf(
-            'Commission vendeur - %d pochon(s) - %s (5%% du bénéfice)',
-            $vente->getNbPochons(),
+            'Commission vendeur - %s$ (Recette: %s$) - %s (5%% du bénéfice)',
+            $vente->getCommission(),
+            $vente->getMontantVenteTotal(),
             $vendeur->getPseudo() ?? $vendeur->getEmail()
         ));
         $argentCommission->setUser($this->getUser());
@@ -183,9 +185,10 @@ class VenteDrogueController extends AbstractController
                 'pseudo' => $vendeur->getPseudo(),
                 'email' => $vendeur->getEmail(),
             ],
-            'nbPochons' => $vente->getNbPochons(),
-            'prixVenteUnitaire' => $vente->getPrixVenteUnitaire(),
+            'montantVenteTotal' => $vente->getMontantVenteTotal(),
             'prixAchatUnitaire' => $vente->getPrixAchatUnitaire(),
+            'coutAchatTotal' => $vente->getCoutAchatTotal(),
+            'nbPochonsApproximatif' => $vente->getNbPochonsApproximatif(),
             'benefice' => $vente->getBenefice(),
             'commission' => $vente->getCommission(),
             'beneficeGroupe' => $vente->getBeneficeGroupe(),
@@ -198,6 +201,7 @@ class VenteDrogueController extends AbstractController
     public function delete(
         int $id,
         VenteDrogueRepository $venteRepo,
+        ArgentRepository $argentRepo,
         EntityManagerInterface $em
     ): JsonResponse {
         $vente = $venteRepo->find($id);
@@ -205,10 +209,33 @@ class VenteDrogueController extends AbstractController
             return new JsonResponse(['error' => 'Vente introuvable'], Response::HTTP_NOT_FOUND);
         }
 
+        // Supprimer les entrées associées dans la comptabilité argent
+        // Chercher les entrées par montant exact et type
+        $allArgent = $argentRepo->findAll();
+        $beneficeGroupeStr = $vente->getBeneficeGroupe();
+        $commissionStr = $vente->getCommission();
+        
+        foreach ($allArgent as $argent) {
+            $commentaire = $argent->getCommentaire() ?? '';
+            $montant = $argent->getMontant();
+            
+            // Supprimer l'entrée "ajout" avec le bénéfice groupe
+            if ($argent->getType() === 'ajout' && $montant === $beneficeGroupeStr && 
+                strpos($commentaire, 'Bénéfice groupe') !== false) {
+                $em->remove($argent);
+            }
+            
+            // Supprimer l'entrée "retrait" avec la commission
+            if ($argent->getType() === 'retrait' && $montant === $commissionStr && 
+                strpos($commentaire, 'Commission vendeur') !== false) {
+                $em->remove($argent);
+            }
+        }
+
         $em->remove($vente);
         $em->flush();
 
-        return new JsonResponse(['message' => 'Vente supprimée']);
+        return new JsonResponse(['message' => 'Vente et entrées associées supprimées']);
     }
 }
 
