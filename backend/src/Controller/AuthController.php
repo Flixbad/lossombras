@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -73,5 +74,51 @@ class AuthController extends AbstractController
             'pseudo' => $user->getPseudo(),
             'roles' => $user->getRoles(),
         ]);
+    }
+
+    #[Route('/reset-password', name: 'api_reset_password', methods: ['POST'])]
+    public function resetPassword(
+        Request $request,
+        UserRepository $userRepo,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        
+        $email = $data['email'] ?? null;
+        $newPassword = $data['newPassword'] ?? null;
+        
+        if (!$email || !$newPassword) {
+            return new JsonResponse([
+                'error' => 'Email et nouveau mot de passe requis'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        
+        // Validation du mot de passe (minimum 6 caractères)
+        if (strlen($newPassword) < 6) {
+            return new JsonResponse([
+                'error' => 'Le mot de passe doit contenir au moins 6 caractères'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        
+        // Trouver l'utilisateur par email
+        $user = $userRepo->findOneBy(['email' => $email]);
+        
+        if (!$user) {
+            return new JsonResponse([
+                'error' => 'Aucun utilisateur trouvé avec cet email'
+            ], Response::HTTP_NOT_FOUND);
+        }
+        
+        // Hasher et définir le nouveau mot de passe
+        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+        $user->setPassword($hashedPassword);
+        
+        $em->flush();
+        
+        return new JsonResponse([
+            'message' => 'Mot de passe réinitialisé avec succès',
+            'email' => $user->getEmail()
+        ], Response::HTTP_OK);
     }
 }
