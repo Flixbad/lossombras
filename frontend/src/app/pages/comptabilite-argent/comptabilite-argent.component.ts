@@ -119,7 +119,7 @@ import { interval, Subscription } from 'rxjs';
             <canvas baseChart
                     [data]="lineChartData"
                     [options]="lineChartOptions"
-                    [type]="'line'">
+                    [type]="'bar'">
             </canvas>
           </div>
         </div>
@@ -133,15 +133,15 @@ import { interval, Subscription } from 'rxjs';
               </svg>
             </div>
             <div>
-              <h2 class="text-lg md:text-xl font-bold text-gray-900">Répartition ajouts/retraits</h2>
-              <p class="text-xs text-gray-500">Visualisation des flux</p>
+              <h2 class="text-lg md:text-xl font-bold text-gray-900">Total ajouts/retraits</h2>
+              <p class="text-xs text-gray-500">Comparaison des montants</p>
             </div>
           </div>
           <div class="h-64 flex items-center justify-center">
             <canvas baseChart
                     [data]="doughnutChartData"
                     [options]="doughnutChartOptions"
-                    [type]="'doughnut'">
+                    [type]="'bar'">
             </canvas>
           </div>
         </div>
@@ -357,12 +357,12 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
     commentaire: ''
   };
 
-  lineChartData: ChartConfiguration<'line'>['data'] = {
+  lineChartData: ChartConfiguration<'bar'>['data'] = {
     labels: [],
     datasets: []
   };
 
-  lineChartOptions: ChartOptions<'line'> = {
+  lineChartOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
@@ -371,34 +371,89 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
         position: 'top'
       },
       tooltip: {
-        enabled: true
+        enabled: true,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        cornerRadius: 8
       }
     },
     scales: {
       y: {
-        beginAtZero: true
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+          callback: function(value) {
+            return value + ' €';
+          }
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      x: {
+        grid: {
+          display: false
+        }
       }
     }
   };
 
-  doughnutChartData: ChartConfiguration<'doughnut'>['data'] = {
+  doughnutChartData: ChartConfiguration<'bar'>['data'] = {
     labels: ['Ajouts', 'Retraits'],
     datasets: [{
+      label: 'Montant (€)',
       data: [0, 0],
-      backgroundColor: ['#10b981', '#ef4444']
+      backgroundColor: [
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(239, 68, 68, 0.8)'
+      ],
+      borderColor: [
+        'rgb(16, 185, 129)',
+        'rgb(239, 68, 68)'
+      ],
+      borderWidth: 2,
+      borderRadius: 8
     }]
   };
 
-  doughnutChartOptions: ChartOptions<'doughnut'> = {
+  doughnutChartOptions: ChartOptions<'bar'> = {
+    indexAxis: 'y',
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
       legend: {
         display: true,
-        position: 'bottom'
+        position: 'top'
       },
       tooltip: {
-        enabled: true
+        enabled: true,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: {
+          label: function(context) {
+            return context.dataset.label + ': ' + context.parsed.x + ' €';
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+          callback: function(value) {
+            return value + ' €';
+          }
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      y: {
+        grid: {
+          display: false
+        }
       }
     }
   };
@@ -488,26 +543,40 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
         {
           data: ajouts,
           label: 'Ajouts',
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          tension: 0.4
+          backgroundColor: 'rgba(16, 185, 129, 0.8)',
+          borderColor: 'rgb(16, 185, 129)',
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false
         },
         {
           data: retraits,
           label: 'Retraits',
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          tension: 0.4
+          backgroundColor: 'rgba(239, 68, 68, 0.8)',
+          borderColor: 'rgb(239, 68, 68)',
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false
         }
       ]
     };
 
-    // Graphique en donut
+    // Graphique en barres horizontales
     this.doughnutChartData = {
       labels: ['Ajouts', 'Retraits'],
       datasets: [{
+        label: 'Montant (€)',
         data: [Math.round(this.stats.totalAjoute), Math.round(this.stats.totalRetire)],
-        backgroundColor: ['#10b981', '#ef4444']
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(239, 68, 68, 0.8)'
+        ],
+        borderColor: [
+          'rgb(16, 185, 129)',
+          'rgb(239, 68, 68)'
+        ],
+        borderWidth: 2,
+        borderRadius: 8
       }]
     };
   }

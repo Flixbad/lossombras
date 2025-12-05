@@ -85,7 +85,7 @@ import { interval, Subscription } from 'rxjs';
             <canvas baseChart
                     [data]="stockChartData"
                     [options]="chartOptions"
-                    [type]="'line'">
+                    [type]="'bar'">
             </canvas>
           </div>
         </div>
@@ -107,7 +107,7 @@ import { interval, Subscription } from 'rxjs';
             <canvas baseChart
                     [data]="argentChartData"
                     [options]="chartOptions"
-                    [type]="'line'">
+                    [type]="'bar'">
             </canvas>
           </div>
         </div>
@@ -198,28 +198,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
   data: DashboardData | null = null;
   refreshSubscription?: Subscription;
   
-  stockChartData: ChartConfiguration<'line'>['data'] = {
+  stockChartData: ChartConfiguration<'bar'>['data'] = {
     labels: [],
     datasets: []
   };
   
-  argentChartData: ChartConfiguration<'line'>['data'] = {
+  argentChartData: ChartConfiguration<'bar'>['data'] = {
     labels: [],
     datasets: []
   };
 
-  chartOptions: ChartOptions<'line'> = {
+  chartOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         display: true,
         position: 'top',
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        cornerRadius: 8
       }
     },
     scales: {
       y: {
-        beginAtZero: true
+        beginAtZero: true,
+        ticks: {
+          precision: 0
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      x: {
+        grid: {
+          display: false
+        }
       }
     }
   };
@@ -278,16 +295,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Entrées',
             data: this.data.tendancesStock.map(t => t?.entrees || 0),
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
             borderColor: 'rgb(34, 197, 94)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            tension: 0.4
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
           },
           {
             label: 'Sorties',
             data: this.data.tendancesStock.map(t => t?.sorties || 0),
+            backgroundColor: 'rgba(239, 68, 68, 0.8)',
             borderColor: 'rgb(239, 68, 68)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            tension: 0.4
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
           }
         ]
       };
@@ -300,16 +321,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Ajouts',
             data: this.data.tendancesArgent.map(t => t?.ajouts || 0),
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
             borderColor: 'rgb(34, 197, 94)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            tension: 0.4
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
           },
           {
             label: 'Retraits',
             data: this.data.tendancesArgent.map(t => t?.retraits || 0),
+            backgroundColor: 'rgba(239, 68, 68, 0.8)',
             borderColor: 'rgb(239, 68, 68)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            tension: 0.4
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
           }
         ]
       };
