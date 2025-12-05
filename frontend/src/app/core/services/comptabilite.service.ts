@@ -32,4 +32,11 @@ export class ComptabiliteService {
   getComptabilite(): Observable<Comptabilite[]> {
     return this.http.get<Comptabilite[]>(`${this.apiUrl}/comptabilite`);
   }
+
+  closeWeek(commentaire?: string): Observable<{ message: string; nbOperationsSupprimees: number; semaine: string }> {
+    return this.http.post<{ message: string; nbOperationsSupprimees: number; semaine: string }>(
+      `${this.apiUrl}/comptabilite/close-week`,
+      { commentaire }
+    );
+  }
 }

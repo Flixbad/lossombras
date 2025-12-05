@@ -2,10 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\ComptabiliteArchive;
 use App\Repository\ComptabiliteRepository;
+use App\Repository\ComptabiliteArchiveRepository;
 use App\Service\DateFormatterService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/comptabilite')]
@@ -41,5 +46,57 @@ class ComptabiliteController extends AbstractController
         }
 
         return new JsonResponse($data);
+    }
+
+    #[Route('/close-week', name: 'api_comptabilite_close_week', methods: ['POST'])]
+    public function closeWeek(
+        Request $request,
+        ComptabiliteRepository $comptabiliteRepo,
+        ComptabiliteArchiveRepository $archiveRepo,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        // Compter les opérations à supprimer
+        $allComptabilites = $comptabiliteRepo->findAll();
+        $nbOperations = count($allComptabilites);
+
+        // Obtenir la semaine actuelle (ISO 8601)
+        $now = new \DateTimeImmutable();
+        $year = (int) $now->format('Y');
+        $week = (int) $now->format('W');
+        $semaineKey = sprintf('%d-W%02d', $year, $week);
+
+        // Vérifier si cette semaine a déjà été clôturée
+        $existingArchive = $archiveRepo->findBySemaine($semaineKey);
+        if ($existingArchive) {
+            return new JsonResponse([
+                'error' => sprintf('La semaine %s a déjà été clôturée', $semaineKey)
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $commentaire = $data['commentaire'] ?? null;
+
+        // Créer l'archive
+        $archive = new ComptabiliteArchive();
+        $archive->setDateCloture($now);
+        $archive->setSemaine($semaineKey);
+        $archive->setNbOperations($nbOperations);
+        $archive->setCommentaire($commentaire ?? sprintf('Clôture manuelle de la semaine %s (%d opérations supprimées)', $semaineKey, $nbOperations));
+        $archive->setClosedBy($this->getUser());
+
+        $em->persist($archive);
+
+        // Supprimer toutes les opérations
+        foreach ($allComptabilites as $comptabilite) {
+            $em->remove($comptabilite);
+        }
+
+        $em->flush();
+
+        return new JsonResponse([
+            'message' => sprintf('Semaine %s clôturée avec succès', $semaineKey),
+            'nbOperationsSupprimees' => $nbOperations,
+            'semaine' => $semaineKey
+        ], Response::HTTP_OK);
     }
 }
