@@ -29,48 +29,92 @@ import { AuthService, User } from '../../core/services/auth.service';
             </div>
           </div>
         </div>
-        <table class="min-w-full">
-          <thead>
-            <tr class="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Pseudo</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Prénom</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nom</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Âge</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Téléphone</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rôle</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr *ngFor="let user of users" class="hover:bg-gray-50/50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                {{ user.pseudo || '-' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.email }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.prenom || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.nom || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.age || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.telephone || '-' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex flex-wrap gap-1">
-                  <span *ngFor="let role of user.roles || []" 
-                        class="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold">
-                    {{ role.replace('ROLE_', '') }}
-                  </span>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <div class="flex gap-2">
-                  <button (click)="openEditModal(user)" 
-                          class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition-colors text-xs">Modifier</button>
-                  <button (click)="deleteUser(user.id)" 
-                          class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition-colors text-xs">Supprimer</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        
+        <!-- Tableau desktop (visible sur md et plus) -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr class="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Pseudo</th>
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">Prénom</th>
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">Nom</th>
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden xl:table-cell">Âge</th>
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden xl:table-cell">Téléphone</th>
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rôle</th>
+                <th class="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr *ngFor="let user of users" class="hover:bg-gray-50/50 transition-colors">
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                  {{ user.pseudo || '-' }}
+                </td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600 truncate max-w-[150px] lg:max-w-none">{{ user.email }}</td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">{{ user.prenom || '-' }}</td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">{{ user.nom || '-' }}</td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden xl:table-cell">{{ user.age || '-' }}</td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden xl:table-cell">{{ user.telephone || '-' }}</td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+                  <div class="flex flex-wrap gap-1">
+                    <span *ngFor="let role of user.roles || []" 
+                          class="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold">
+                      {{ role.replace('ROLE_', '') }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
+                  <div class="flex gap-2">
+                    <button (click)="openEditModal(user)" 
+                            class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition-colors text-xs whitespace-nowrap">Modifier</button>
+                    <button (click)="deleteUser(user.id)" 
+                            class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition-colors text-xs whitespace-nowrap">Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Vue mobile (visible sur petits écrans) -->
+        <div class="md:hidden divide-y divide-gray-100">
+          <div *ngFor="let user of users" class="p-4 hover:bg-gray-50/50 transition-colors">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-semibold text-gray-900 truncate">{{ user.pseudo || 'Sans pseudo' }}</h3>
+                <p class="text-xs text-gray-600 truncate">{{ user.email }}</p>
+              </div>
+              <div class="flex gap-2 flex-shrink-0">
+                <button (click)="openEditModal(user)" 
+                        class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition-colors text-xs whitespace-nowrap">Modifier</button>
+                <button (click)="deleteUser(user.id)" 
+                        class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition-colors text-xs whitespace-nowrap">Supprimer</button>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+              <div *ngIf="user.prenom">
+                <span class="font-medium">Prénom:</span> {{ user.prenom }}
+              </div>
+              <div *ngIf="user.nom">
+                <span class="font-medium">Nom:</span> {{ user.nom }}
+              </div>
+              <div *ngIf="user.age">
+                <span class="font-medium">Âge:</span> {{ user.age }}
+              </div>
+              <div *ngIf="user.telephone">
+                <span class="font-medium">Tél:</span> {{ user.telephone }}
+              </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-1">
+              <span *ngFor="let role of user.roles || []" 
+                    class="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold">
+                {{ role.replace('ROLE_', '') }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div *ngIf="showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
