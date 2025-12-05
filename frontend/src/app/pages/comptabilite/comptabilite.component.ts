@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ComptabiliteService, Comptabilite } from '../../core/services/comptabilite.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-comptabilite',
@@ -14,7 +15,8 @@ import { ComptabiliteService, Comptabilite } from '../../core/services/comptabil
           <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-orange-800 to-amber-800 bg-clip-text text-transparent mb-2">Comptabilité - Entrées/Sorties</h1>
           <p class="text-gray-600 text-sm md:text-base">Historique complet des mouvements de stock</p>
         </div>
-        <button (click)="showCloseWeekModal = true" 
+        <button *ngIf="canCloseWeek()" 
+                (click)="showCloseWeekModal = true" 
                 class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 font-semibold flex items-center gap-2">
           <svg class="w-5 h-5 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -156,7 +158,10 @@ export class ComptabiliteComponent implements OnInit {
   closingWeek = false;
   closeWeekComment = '';
 
-  constructor(private comptabiliteService: ComptabiliteService) {}
+  constructor(
+    private comptabiliteService: ComptabiliteService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.loadComptabilite();
@@ -197,6 +202,23 @@ export class ComptabiliteComponent implements OnInit {
         }
       }
     });
+  }
+
+  canCloseWeek(): boolean {
+    const user = this.authService.getCurrentUser();
+    if (!user || !user.roles) {
+      return false;
+    }
+
+    const authorizedRoles = [
+      'ROLE_CAPITAN',
+      'ROLE_ALFERES',
+      'ROLE_COMANDANTE',
+      'ROLE_SEGUNDO',
+      'ROLE_JEFE'
+    ];
+
+    return user.roles.some(role => authorizedRoles.includes(role));
   }
 
   showSuccessCloseMessage(nbOperations: number, semaine: string): void {

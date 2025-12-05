@@ -55,6 +55,36 @@ class ComptabiliteController extends AbstractController
         ComptabiliteArchiveRepository $archiveRepo,
         EntityManagerInterface $em
     ): JsonResponse {
+        $user = $this->getUser();
+        
+        if (!$user) {
+            return new JsonResponse(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier que l'utilisateur a un des rôles autorisés
+        $authorizedRoles = [
+            'ROLE_CAPITAN',
+            'ROLE_ALFERES',
+            'ROLE_COMANDANTE',
+            'ROLE_SEGUNDO',
+            'ROLE_JEFE'
+        ];
+        
+        $userRoles = $user->getRoles();
+        $hasAccess = false;
+        foreach ($authorizedRoles as $role) {
+            if (in_array($role, $userRoles)) {
+                $hasAccess = true;
+                break;
+            }
+        }
+
+        if (!$hasAccess) {
+            return new JsonResponse([
+                'error' => 'Accès refusé. Seuls les grades supérieurs peuvent clôturer la comptabilité.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         // Compter les opérations à supprimer
         $allComptabilites = $comptabiliteRepo->findAll();
         $nbOperations = count($allComptabilites);
