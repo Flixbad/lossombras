@@ -29,7 +29,7 @@ echo ""
 
 echo "📦 2/6 - Installation des dépendances backend..."
 cd "$BACKEND_DIR"
-composer install --no-dev --optimize-autoloader --quiet
+composer install --no-dev --optimize-autoloader --no-scripts --quiet
 echo "✅ Dépendances backend installées"
 echo ""
 

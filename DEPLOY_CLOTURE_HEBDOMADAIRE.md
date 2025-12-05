@@ -11,7 +11,7 @@ git pull origin main
 ### 2. Installer les dépendances backend (si nécessaire)
 ```bash
 cd backend
-composer install --no-dev --optimize-autoloader
+composer install --no-dev --optimize-autoloader --no-scripts
 ```
 
 ### 3. Exécuter la migration
