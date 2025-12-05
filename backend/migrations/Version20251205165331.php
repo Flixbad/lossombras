@@ -19,13 +19,24 @@ final class Version20251205165331 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE comptabilite_archive (id INT AUTO_INCREMENT NOT NULL, date_cloture DATETIME NOT NULL, semaine VARCHAR(10) NOT NULL, nb_operations INT NOT NULL, commentaire LONGTEXT DEFAULT NULL, created_at DATETIME NOT NULL, closed_by_id INT DEFAULT NULL, INDEX IDX_E8F91272E1FA7797 (closed_by_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
-        $this->addSql('CREATE TABLE vente_drogue (id INT AUTO_INCREMENT NOT NULL, nb_pochons INT NOT NULL, prix_vente_unitaire NUMERIC(10, 2) NOT NULL, prix_achat_unitaire NUMERIC(10, 2) NOT NULL, benefice NUMERIC(10, 2) NOT NULL, commission NUMERIC(10, 2) NOT NULL, benefice_groupe NUMERIC(10, 2) NOT NULL, commentaire LONGTEXT DEFAULT NULL, created_at DATETIME NOT NULL, vendeur_id INT NOT NULL, INDEX IDX_EFEC95ED858C065E (vendeur_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
-        $this->addSql('ALTER TABLE comptabilite_archive ADD CONSTRAINT FK_E8F91272E1FA7797 FOREIGN KEY (closed_by_id) REFERENCES `user` (id)');
-        $this->addSql('ALTER TABLE vente_drogue ADD CONSTRAINT FK_EFEC95ED858C065E FOREIGN KEY (vendeur_id) REFERENCES `user` (id)');
+        // Vérifier si les tables existent déjà avant de les créer
+        if (!$schema->hasTable('comptabilite_archive')) {
+            $this->addSql('CREATE TABLE comptabilite_archive (id INT AUTO_INCREMENT NOT NULL, date_cloture DATETIME NOT NULL, semaine VARCHAR(10) NOT NULL, nb_operations INT NOT NULL, commentaire LONGTEXT DEFAULT NULL, created_at DATETIME NOT NULL, closed_by_id INT DEFAULT NULL, INDEX IDX_E8F91272E1FA7797 (closed_by_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+            $this->addSql('ALTER TABLE comptabilite_archive ADD CONSTRAINT FK_E8F91272E1FA7797 FOREIGN KEY (closed_by_id) REFERENCES `user` (id)');
+        }
+        
+        if (!$schema->hasTable('vente_drogue')) {
+            $this->addSql('CREATE TABLE vente_drogue (id INT AUTO_INCREMENT NOT NULL, nb_pochons INT NOT NULL, prix_vente_unitaire NUMERIC(10, 2) NOT NULL, prix_achat_unitaire NUMERIC(10, 2) NOT NULL, benefice NUMERIC(10, 2) NOT NULL, commission NUMERIC(10, 2) NOT NULL, benefice_groupe NUMERIC(10, 2) NOT NULL, commentaire LONGTEXT DEFAULT NULL, created_at DATETIME NOT NULL, vendeur_id INT NOT NULL, INDEX IDX_EFEC95ED858C065E (vendeur_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+            $this->addSql('ALTER TABLE vente_drogue ADD CONSTRAINT FK_EFEC95ED858C065E FOREIGN KEY (vendeur_id) REFERENCES `user` (id)');
+        }
+        
+        // Modifier argent_archive seulement si nécessaire
         $this->addSql('ALTER TABLE argent_archive CHANGE date_cloture date_cloture DATETIME NOT NULL, CHANGE created_at created_at DATETIME NOT NULL');
-        $this->addSql('ALTER TABLE argent_archive RENAME INDEX idx_archive_closed_by TO IDX_C17FA438E1FA7797');
+        try {
+            $this->addSql('ALTER TABLE argent_archive RENAME INDEX idx_archive_closed_by TO IDX_C17FA438E1FA7797');
+        } catch (\Exception $e) {
+            // L'index peut déjà avoir le bon nom, on ignore l'erreur
+        }
     }
 
     public function down(Schema $schema): void
