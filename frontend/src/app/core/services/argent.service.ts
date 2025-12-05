@@ -60,5 +60,12 @@ export class ArgentService {
   deleteArgent(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/argent/${id}`);
   }
+
+  closeWeek(commentaire?: string): Observable<{ message: string; soldeArchive: number; semaine: string }> {
+    return this.http.post<{ message: string; soldeArchive: number; semaine: string }>(
+      `${this.apiUrl}/argent/close-week`,
+      { commentaire }
+    );
+  }
 }
 

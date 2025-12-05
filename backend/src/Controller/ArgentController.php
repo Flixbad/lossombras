@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Argent;
+use App\Entity\ArgentArchive;
 use App\Repository\ArgentRepository;
+use App\Repository\ArgentArchiveRepository;
 use App\Service\DateFormatterService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -193,6 +195,78 @@ class ArgentController extends AbstractController
         $em->flush();
 
         return new JsonResponse(['message' => 'Opération supprimée']);
+    }
+
+    #[Route('/close-week', name: 'api_argent_close_week', methods: ['POST'])]
+    public function closeWeek(
+        Request $request,
+        ArgentRepository $argentRepo,
+        ArgentArchiveRepository $archiveRepo,
+        EntityManagerInterface $em,
+        DateFormatterService $dateFormatter
+    ): JsonResponse {
+        // Calculer le solde actuel
+        $allArgent = $argentRepo->findAll();
+        $solde = 0;
+
+        foreach ($allArgent as $argent) {
+            $montant = (float) $argent->getMontant();
+            if ($argent->getType() === 'ajout') {
+                $solde += $montant;
+            } elseif ($argent->getType() === 'retrait') {
+                $solde -= $montant;
+            }
+        }
+
+        // Obtenir la semaine actuelle (ISO 8601)
+        $now = new \DateTimeImmutable();
+        $year = (int) $now->format('Y');
+        $week = (int) $now->format('W');
+        $semaineKey = sprintf('%d-W%02d', $year, $week);
+
+        // Vérifier si cette semaine a déjà été clôturée
+        $existingArchive = $archiveRepo->findBySemaine($semaineKey);
+        if ($existingArchive) {
+            return new JsonResponse([
+                'error' => sprintf('La semaine %s a déjà été clôturée', $semaineKey)
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $commentaire = $data['commentaire'] ?? null;
+
+        // Créer l'archive
+        $archive = new ArgentArchive();
+        $archive->setSolde((string) $solde);
+        $archive->setDateCloture($now);
+        $archive->setSemaine($semaineKey);
+        $archive->setCommentaire($commentaire ?? sprintf('Clôture manuelle de la semaine %s', $semaineKey));
+        $archive->setClosedBy($this->getUser());
+
+        $em->persist($archive);
+
+        // Supprimer toutes les opérations
+        foreach ($allArgent as $argent) {
+            $em->remove($argent);
+        }
+
+        // Si le solde est positif, créer une nouvelle opération "ajout" avec le solde
+        if ($solde > 0) {
+            $nouvelArgent = new Argent();
+            $nouvelArgent->setType('ajout');
+            $nouvelArgent->setMontant((string) $solde);
+            $nouvelArgent->setCommentaire(sprintf('Solde reporté de la semaine %s', $semaineKey));
+            $nouvelArgent->setUser($this->getUser());
+            $em->persist($nouvelArgent);
+        }
+
+        $em->flush();
+
+        return new JsonResponse([
+            'message' => sprintf('Semaine %s clôturée avec succès', $semaineKey),
+            'soldeArchive' => $solde,
+            'semaine' => $semaineKey
+        ], Response::HTTP_OK);
     }
 }
 

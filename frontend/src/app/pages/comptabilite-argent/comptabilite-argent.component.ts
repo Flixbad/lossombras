@@ -19,13 +19,22 @@ import { interval, Subscription } from 'rxjs';
           <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-emerald-800 bg-clip-text text-transparent mb-2">Comptabilité Financière</h1>
           <p class="text-gray-600 text-sm md:text-base">Suivi complet de vos finances</p>
         </div>
-        <button (click)="showAddModal = true" 
-                class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 font-semibold flex items-center gap-2">
-          <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          Ajouter une opération
-        </button>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button (click)="showAddModal = true" 
+                  class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Ajouter une opération
+          </button>
+          <button (click)="showCloseWeekModal = true" 
+                  class="group w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Clôturer la semaine
+          </button>
+        </div>
       </div>
 
       <!-- Sélection période -->
@@ -339,6 +348,77 @@ import { interval, Subscription } from 'rxjs';
           </form>
         </div>
       </div>
+
+      <!-- Modal clôture semaine -->
+      <div *ngIf="showCloseWeekModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
+          <div class="flex justify-between items-start mb-6">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 mb-1">Clôturer la semaine</h2>
+              <p class="text-sm text-gray-500">Archiver le solde et effacer l'historique</p>
+            </div>
+            <button (click)="showCloseWeekModal = false" class="text-gray-400 hover:text-gray-600" aria-label="Fermer">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200/50 rounded-xl p-5 mb-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-600">Solde actuel à archiver</p>
+                <p class="text-2xl font-bold text-orange-700">
+                  {{ stats?.solde || 0 | number:'1.0-0' }} €
+                </p>
+              </div>
+            </div>
+            <p class="text-xs text-gray-600 mt-3">
+              ⚠️ Cette action va :<br>
+              • Archiver le solde actuel ({{ stats?.solde || 0 | number:'1.0-0' }} €)<br>
+              • Supprimer toutes les opérations de l'historique<br>
+              • Créer une nouvelle opération "ajout" avec le solde reporté<br>
+              • Réinitialiser l'historique pour la nouvelle semaine
+            </p>
+          </div>
+
+          <form (ngSubmit)="closeWeek()" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Commentaire (optionnel)</label>
+              <textarea [(ngModel)]="closeWeekComment" 
+                        name="closeWeekComment" 
+                        rows="3"
+                        placeholder="Ex: Clôture de la semaine, vérification des comptes..."
+                        class="w-full px-4 py-2 border-2 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"></textarea>
+            </div>
+            
+            <div class="flex gap-4 pt-2">
+              <button type="submit" 
+                      [disabled]="closingWeek"
+                      [class.opacity-50]="closingWeek"
+                      [class.cursor-not-allowed]="closingWeek"
+                      class="flex-1 bg-orange-600 text-white py-3 rounded-md hover:bg-orange-700 transition-colors font-medium flex items-center justify-center gap-2">
+                <svg *ngIf="closingWeek" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ closingWeek ? 'Clôture en cours...' : 'Clôturer la semaine' }}</span>
+              </button>
+              <button type="button" 
+                      (click)="showCloseWeekModal = false"
+                      [disabled]="closingWeek"
+                      class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-md hover:bg-gray-400 transition-colors font-medium">
+                Annuler
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   `,
   styles: []
@@ -347,6 +427,9 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
   argentList: Argent[] = [];
   stats: ArgentStats | null = null;
   showAddModal = false;
+  showCloseWeekModal = false;
+  closingWeek = false;
+  closeWeekComment = '';
   selectedPeriod: 'jour' | 'semaine' | 'mois' = 'mois';
   lastUpdate = new Date();
   private refreshSubscription?: Subscription;
@@ -646,5 +729,51 @@ export class ComptabiliteArgentComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  closeWeek(): void {
+    if (!confirm('⚠️ Êtes-vous sûr de vouloir clôturer la semaine ? Cette action est irréversible et effacera tout l\'historique.')) {
+      return;
+    }
+
+    this.closingWeek = true;
+    this.argentService.closeWeek(this.closeWeekComment || undefined).subscribe({
+      next: (response) => {
+        this.closingWeek = false;
+        this.showCloseWeekModal = false;
+        this.closeWeekComment = '';
+        this.showSuccessCloseMessage(response.soldeArchive, response.semaine);
+        this.loadData(); // Recharger les données
+      },
+      error: (err) => {
+        this.closingWeek = false;
+        console.error('Erreur lors de la clôture', err);
+        if (err.status === 401) {
+          alert('Votre session a expiré. Veuillez vous reconnecter.');
+        } else {
+          alert(err.error?.error || 'Erreur lors de la clôture de la semaine');
+        }
+      }
+    });
+  }
+
+  showSuccessCloseMessage(solde: number, semaine: string): void {
+    const message = document.createElement('div');
+    message.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 max-w-md';
+    message.innerHTML = `
+      <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <div>
+        <p class="font-medium">Semaine ${semaine} clôturée avec succès !</p>
+        <p class="text-sm opacity-90">Solde archivé : ${solde.toLocaleString('fr-FR')} €</p>
+      </div>
+    `;
+    document.body.appendChild(message);
+    setTimeout(() => {
+      message.style.opacity = '0';
+      message.style.transition = 'opacity 0.3s ease-out';
+      setTimeout(() => message.remove(), 300);
+    }, 5000);
   }
 }
