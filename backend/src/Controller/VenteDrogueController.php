@@ -146,8 +146,16 @@ class VenteDrogueController extends AbstractController
         // Calculer les bénéfices après avoir défini toutes les valeurs
         $vente->calculerBenefices();
 
-        $em->persist($vente);
-        $em->flush();
+        try {
+            $em->persist($vente);
+            $em->flush();
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors de l\'enregistrement de la vente',
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         // Créer automatiquement les entrées dans la comptabilité argent :
         // 1. Ajout du bénéfice groupe (revenu)
