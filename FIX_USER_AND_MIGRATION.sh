@@ -46,6 +46,6 @@ echo "📝 N'oubliez pas de mettre à jour le fichier .env avec le nouveau mot d
 echo "   DATABASE_URL=\"mysql://los_sombras_user:${NEW_PASSWORD}@127.0.0.1:3306/${DB_NAME}?serverVersion=8.0.31&charset=utf8mb4\""
 echo ""
 echo "📋 Vous pouvez maintenant relancer :"
-echo "   cd /var/www/html/los-sombras/backend"
+echo "   cd /var/www/lossombras/backend"
 echo "   php bin/console doctrine:migrations:migrate --no-interaction"
 

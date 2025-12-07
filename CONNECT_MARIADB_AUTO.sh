@@ -4,7 +4,7 @@
 echo "🔍 Recherche des identifiants dans le fichier .env..."
 echo ""
 
-cd /var/www/html/los-sombras/backend || cd backend || exit 1
+cd /var/www/lossombras/backend || cd backend || exit 1
 
 if [ ! -f .env ]; then
     echo "❌ Fichier .env non trouvé dans le répertoire backend"

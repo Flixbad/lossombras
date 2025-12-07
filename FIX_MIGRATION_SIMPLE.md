@@ -41,7 +41,7 @@ php bin/console doctrine:migrations:migrate --no-interaction
 Les identifiants de la base de données sont dans votre fichier `.env` :
 
 ```bash
-cd /var/www/html/los-sombras/backend
+cd /var/www/lossombras/backend
 cat .env | grep DATABASE_URL
 ```
 

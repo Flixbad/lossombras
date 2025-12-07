@@ -46,7 +46,7 @@ sudo systemctl start mysql
 ## Trouver les identifiants dans le fichier .env
 
 ```bash
-cd /var/www/html/los-sombras/backend
+cd /var/www/lossombras/backend
 cat .env | grep DATABASE_URL
 ```
 
@@ -55,7 +55,7 @@ Le format est : `DATABASE_URL="mysql://user:password@localhost:3306/db_name"`
 ## Extraire les identifiants depuis .env
 
 ```bash
-cd /var/www/html/los-sombras/backend
+cd /var/www/lossombras/backend
 # Extraire l'utilisateur
 grep DATABASE_URL .env | sed 's/.*mysql:\/\/\([^:]*\):.*/\1/'
 # Extraire le mot de passe
@@ -67,7 +67,7 @@ grep DATABASE_URL .env | sed 's/.*@[^/]*\/\([^?]*\).*/\1/'
 ## Script automatique pour extraire et utiliser les identifiants
 
 ```bash
-cd /var/www/html/los-sombras/backend
+cd /var/www/lossombras/backend
 
 # Extraire les informations
 DB_URL=$(grep DATABASE_URL .env | cut -d '"' -f 2)

@@ -60,7 +60,7 @@ mysql -u los_sombras_user -p
 Si vous avez changé le mot de passe, mettez à jour votre `.env` :
 
 ```bash
-cd /var/www/html/los-sombras/backend
+cd /var/www/lossombras/backend
 nano .env
 ```
 
@@ -90,6 +90,7 @@ DATABASE_URL="mysql://root:@127.0.0.1:3306/los_sombras?serverVersion=8.0.31&char
 Puis exécutez les migrations avec `sudo` :
 
 ```bash
+cd /var/www/lossombras/backend
 sudo php bin/console doctrine:migrations:migrate --no-interaction
 ```
 

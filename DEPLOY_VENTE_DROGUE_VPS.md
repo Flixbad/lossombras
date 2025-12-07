@@ -5,8 +5,7 @@
 ### 1. Se connecter au VPS et aller dans le répertoire du projet
 
 ```bash
-cd /var/www/html/los-sombras
-# ou le chemin de votre projet
+cd /var/www/lossombras
 ```
 
 ### 2. Récupérer les dernières modifications depuis Git
@@ -76,7 +75,7 @@ sudo systemctl restart php8.1-fpm  # ou la version de PHP que vous utilisez
 
 ```bash
 # Se connecter au VPS puis :
-cd /var/www/html/los-sombras
+cd /var/www/lossombras
 git pull origin main
 cd backend
 composer install --no-dev --optimize-autoloader --no-scripts
