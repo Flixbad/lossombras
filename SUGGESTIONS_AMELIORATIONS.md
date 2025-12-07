@@ -226,3 +226,5 @@
 
 Dites-moi quelle(s) fonctionnalité(s) vous souhaitez que je développe en priorité ! Je peux commencer par celles qui vous semblent les plus utiles.
 
+
+

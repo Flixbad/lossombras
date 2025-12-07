@@ -27,3 +27,5 @@ FOREIGN KEY (closed_by_id) REFERENCES `user` (id);
 SHOW TABLES LIKE 'argent_archive';
 DESCRIBE argent_archive;
 
+
+

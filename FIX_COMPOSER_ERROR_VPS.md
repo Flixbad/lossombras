@@ -94,3 +94,5 @@ L'erreur 127 est souvent liée à :
 
 Le flag `--no-scripts` résout généralement le problème car il évite d'exécuter les scripts qui causent l'erreur. Les fonctionnalités Symfony continueront de fonctionner normalement.
 
+
+

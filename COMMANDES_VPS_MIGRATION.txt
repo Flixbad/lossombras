@@ -31,3 +31,5 @@ php bin/console doctrine:query:sql "SHOW TABLES LIKE 'argent_archive'"
 # 5. Vérifier l'état des migrations
 php bin/console doctrine:migrations:status
 
+
+

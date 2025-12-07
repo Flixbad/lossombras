@@ -41,3 +41,5 @@ else
     echo "  ALTER TABLE vente_drogue CHANGE prix_vente_unitaire montant_vente_total NUMERIC(10, 2) NOT NULL;"
 fi
 
+
+

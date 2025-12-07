@@ -105,3 +105,5 @@ php bin/console app:close-week-argent --dry-run 2>/dev/null || echo "Commande di
 
 Tout devrait fonctionner normalement après cela !
 
+
+

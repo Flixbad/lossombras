@@ -69,3 +69,5 @@ DEALLOCATE PREPARE stmt;
 -- Afficher la structure finale
 DESCRIBE vente_drogue;
 
+
+

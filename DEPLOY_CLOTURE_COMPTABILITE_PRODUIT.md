@@ -107,3 +107,5 @@ php bin/console app:close-week-comptabilite
 - Les opérations sont supprimées mais le nombre est archivé
 - Cette action améliore les performances en réduisant la quantité de données
 
+
+

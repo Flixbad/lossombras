@@ -6,7 +6,6 @@ use App\Entity\Argent;
 use App\Entity\ArgentArchive;
 use App\Repository\ArgentRepository;
 use App\Repository\ArgentArchiveRepository;
-use App\Repository\VenteDrogueRepository;
 use App\Service\DateFormatterService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -203,7 +202,6 @@ class ArgentController extends AbstractController
         Request $request,
         ArgentRepository $argentRepo,
         ArgentArchiveRepository $archiveRepo,
-        VenteDrogueRepository $venteDrogueRepo,
         EntityManagerInterface $em,
         DateFormatterService $dateFormatter
     ): JsonResponse {
@@ -247,14 +245,6 @@ class ArgentController extends AbstractController
 
         $em->persist($archive);
 
-        // Supprimer toutes les ventes de drogue de la semaine
-        $allVentesDrogue = $venteDrogueRepo->findAll();
-        $nbVentesSupprimees = 0;
-        foreach ($allVentesDrogue as $vente) {
-            $em->remove($vente);
-            $nbVentesSupprimees++;
-        }
-
         // Supprimer toutes les opérations
         foreach ($allArgent as $argent) {
             $em->remove($argent);
@@ -275,8 +265,7 @@ class ArgentController extends AbstractController
         return new JsonResponse([
             'message' => sprintf('Semaine %s clôturée avec succès', $semaineKey),
             'soldeArchive' => $solde,
-            'semaine' => $semaineKey,
-            'nbVentesSupprimees' => $nbVentesSupprimees
+            'semaine' => $semaineKey
         ], Response::HTTP_OK);
     }
 }

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface VenteDrogue {
   id: number;
+  typeDrogue?: string;
   vendeur: {
     id: number;
     pseudo?: string;
@@ -44,9 +45,17 @@ export interface VenteDrogueStats {
 
 export interface CreateVenteDrogueRequest {
   vendeurId: number;
+  typeDrogue?: string;
   montantVenteTotal: number;
   prixAchatUnitaire?: number;
   commentaire?: string;
+}
+
+export interface DrogueType {
+  nom: string;
+  unite: string;
+  prixAchatUnitaire: number;
+  prixVenteUnitaire: number;
 }
 
 @Injectable({
@@ -71,6 +80,10 @@ export class VenteDrogueService {
 
   deleteVente(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  getTypes(): Observable<{ [key: string]: DrogueType }> {
+    return this.http.get<{ [key: string]: DrogueType }>(`${this.apiUrl}/types`);
   }
 }
 

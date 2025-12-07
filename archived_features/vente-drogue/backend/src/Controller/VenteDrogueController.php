@@ -8,6 +8,7 @@ use App\Repository\VenteDrogueRepository;
 use App\Repository\ArgentRepository;
 use App\Repository\UserRepository;
 use App\Service\DateFormatterService;
+use App\Service\DroguePricingService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,27 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/vente-drogue')]
 class VenteDrogueController extends AbstractController
 {
+    #[Route('/types', name: 'api_vente_drogue_types', methods: ['GET'])]
+    public function getTypes(DroguePricingService $pricingService): JsonResponse
+    {
+        $types = $pricingService->getAllTypesWithNames();
+        $configs = [];
+        
+        foreach ($types as $type => $nom) {
+            $config = $pricingService->getConfig($type);
+            if ($config) {
+                $configs[$type] = [
+                    'nom' => $nom,
+                    'unite' => $config['unite'] ?? 'unité',
+                    'prixAchatUnitaire' => $config['prixAchatUnitaire'] ?? null,
+                    'prixVenteUnitaire' => $config['prixVenteUnitaire'] ?? ($config['prixVenteMoyen'] ?? null),
+                ];
+            }
+        }
+        
+        return new JsonResponse($configs);
+    }
+
     #[Route('', name: 'api_vente_drogue_list', methods: ['GET'])]
     public function list(
         VenteDrogueRepository $venteRepo,
@@ -30,6 +52,7 @@ class VenteDrogueController extends AbstractController
             $vendeur = $vente->getVendeur();
             $data[] = [
                 'id' => $vente->getId(),
+                'typeDrogue' => $vente->getTypeDrogue(),
                 'vendeur' => $vendeur ? [
                     'id' => $vendeur->getId(),
                     'pseudo' => $vendeur->getPseudo(),
@@ -114,13 +137,14 @@ class VenteDrogueController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserRepository $userRepo,
-        DateFormatterService $dateFormatter
+        DateFormatterService $dateFormatter,
+        DroguePricingService $pricingService
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
         $vendeurId = $data['vendeurId'] ?? null;
+        $typeDrogue = $data['typeDrogue'] ?? 'cocaine';
         $montantVenteTotal = $data['montantVenteTotal'] ?? null;
-        $prixAchatUnitaire = $data['prixAchatUnitaire'] ?? 625.00;
         $commentaire = $data['commentaire'] ?? null;
 
         if (!$vendeurId) {
@@ -131,6 +155,12 @@ class VenteDrogueController extends AbstractController
             return new JsonResponse(['error' => 'Montant de vente total invalide'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Vérifier que le type de drogue est valide
+        $config = $pricingService->getConfig($typeDrogue);
+        if (!$config) {
+            return new JsonResponse(['error' => 'Type de drogue invalide'], Response::HTTP_BAD_REQUEST);
+        }
+
         $vendeur = $userRepo->find($vendeurId);
         if (!$vendeur) {
             return new JsonResponse(['error' => 'Vendeur introuvable'], Response::HTTP_NOT_FOUND);
@@ -139,12 +169,12 @@ class VenteDrogueController extends AbstractController
         // Créer la vente
         $vente = new VenteDrogue();
         $vente->setVendeur($vendeur);
+        $vente->setTypeDrogue($typeDrogue);
         $vente->setMontantVenteTotal(number_format((float) $montantVenteTotal, 2, '.', ''));
-        $vente->setPrixAchatUnitaire(number_format((float) $prixAchatUnitaire, 2, '.', ''));
         $vente->setCommentaire($commentaire);
         
-        // Calculer les bénéfices après avoir défini toutes les valeurs
-        $vente->calculerBenefices();
+        // Calculer les bénéfices avec le service de pricing
+        $vente->calculerBenefices($pricingService);
 
         try {
             $em->persist($vente);
@@ -188,6 +218,7 @@ class VenteDrogueController extends AbstractController
 
         return new JsonResponse([
             'id' => $vente->getId(),
+            'typeDrogue' => $vente->getTypeDrogue(),
             'vendeur' => [
                 'id' => $vendeur->getId(),
                 'pseudo' => $vendeur->getPseudo(),

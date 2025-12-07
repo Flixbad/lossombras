@@ -154,3 +154,5 @@ echo "  • Nginx: tail -f /var/log/nginx/error.log"
 echo "  • PHP-FPM: journalctl -u $PHP_FPM_SERVICE -f"
 echo ""
 
+
+

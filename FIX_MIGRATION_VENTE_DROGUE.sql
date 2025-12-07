@@ -18,3 +18,5 @@ ADD COLUMN IF NOT EXISTS cout_achat_total NUMERIC(10, 2) DEFAULT NULL;
 
 -- Si vous avez des données importantes, sauvegardez-les d'abord !
 
+
+

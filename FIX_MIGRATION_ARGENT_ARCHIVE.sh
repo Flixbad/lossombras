@@ -48,3 +48,5 @@ echo ""
 echo "✅ Terminé ! Vérifiez que la table existe :"
 php bin/console doctrine:query:sql "SHOW TABLES LIKE 'argent_archive'"
 
+
+
