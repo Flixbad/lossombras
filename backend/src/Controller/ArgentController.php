@@ -6,6 +6,7 @@ use App\Entity\Argent;
 use App\Entity\ArgentArchive;
 use App\Repository\ArgentRepository;
 use App\Repository\ArgentArchiveRepository;
+use App\Repository\VenteDrogueRepository;
 use App\Service\DateFormatterService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,9 +18,50 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/argent')]
 class ArgentController extends AbstractController
 {
+    /**
+     * Vérifie si l'utilisateur actuel a accès à la comptabilité argent
+     * Rôles autorisés : Jefe, Segundo Commandanté, Alférez, Contador
+     */
+    private function checkAccess(): ?JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return new JsonResponse(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $userRoles = $user->getRoles();
+        $authorizedRoles = [
+            'ROLE_JEFE',
+            'ROLE_SEGUNDO',
+            'ROLE_ALFERES',
+            'ROLE_CONTADOR'
+        ];
+
+        $hasAccess = false;
+        foreach ($userRoles as $role) {
+            if (in_array($role, $authorizedRoles)) {
+                $hasAccess = true;
+                break;
+            }
+        }
+
+        if (!$hasAccess) {
+            return new JsonResponse([
+                'error' => 'Accès refusé. Seuls Jefe, Segundo Commandanté, Alférez et Contador ont accès à cette fonctionnalité.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        return null;
+    }
+
     #[Route('', name: 'api_argent_list', methods: ['GET'])]
     public function list(ArgentRepository $argentRepo, DateFormatterService $dateFormatter): JsonResponse
     {
+        $accessCheck = $this->checkAccess();
+        if ($accessCheck !== null) {
+            return $accessCheck;
+        }
+
         $argentList = $argentRepo->findBy([], ['createdAt' => 'DESC']);
         $data = [];
 
@@ -45,6 +87,11 @@ class ArgentController extends AbstractController
     #[Route('/stats', name: 'api_argent_stats', methods: ['GET'])]
     public function stats(Request $request, ArgentRepository $argentRepo, DateFormatterService $dateFormatter): JsonResponse
     {
+        $accessCheck = $this->checkAccess();
+        if ($accessCheck !== null) {
+            return $accessCheck;
+        }
+
         $period = $request->query->get('period', 'mois');
         $all = $argentRepo->findAll();
         
@@ -147,6 +194,11 @@ class ArgentController extends AbstractController
         EntityManagerInterface $em,
         DateFormatterService $dateFormatter
     ): JsonResponse {
+        $accessCheck = $this->checkAccess();
+        if ($accessCheck !== null) {
+            return $accessCheck;
+        }
+
         $data = json_decode($request->getContent(), true);
 
         $type = $data['type'] ?? null;
@@ -186,6 +238,11 @@ class ArgentController extends AbstractController
     #[Route('/{id}', name: 'api_argent_delete', methods: ['DELETE'])]
     public function delete(int $id, ArgentRepository $argentRepo, EntityManagerInterface $em): JsonResponse
     {
+        $accessCheck = $this->checkAccess();
+        if ($accessCheck !== null) {
+            return $accessCheck;
+        }
+
         $argent = $argentRepo->find($id);
         if (!$argent) {
             return new JsonResponse(['error' => 'Opération introuvable'], Response::HTTP_NOT_FOUND);
@@ -202,9 +259,15 @@ class ArgentController extends AbstractController
         Request $request,
         ArgentRepository $argentRepo,
         ArgentArchiveRepository $archiveRepo,
+        VenteDrogueRepository $venteDrogueRepo,
         EntityManagerInterface $em,
         DateFormatterService $dateFormatter
     ): JsonResponse {
+        $accessCheck = $this->checkAccess();
+        if ($accessCheck !== null) {
+            return $accessCheck;
+        }
+
         // Calculer le solde actuel
         $allArgent = $argentRepo->findAll();
         $solde = 0;
@@ -245,6 +308,14 @@ class ArgentController extends AbstractController
 
         $em->persist($archive);
 
+        // Supprimer toutes les ventes de drogue de la semaine
+        $allVentesDrogue = $venteDrogueRepo->findAll();
+        $nbVentesSupprimees = 0;
+        foreach ($allVentesDrogue as $vente) {
+            $em->remove($vente);
+            $nbVentesSupprimees++;
+        }
+
         // Supprimer toutes les opérations
         foreach ($allArgent as $argent) {
             $em->remove($argent);
@@ -265,7 +336,8 @@ class ArgentController extends AbstractController
         return new JsonResponse([
             'message' => sprintf('Semaine %s clôturée avec succès', $semaineKey),
             'soldeArchive' => $solde,
-            'semaine' => $semaineKey
+            'semaine' => $semaineKey,
+            'nbVentesSupprimees' => $nbVentesSupprimees
         ], Response::HTTP_OK);
     }
 }

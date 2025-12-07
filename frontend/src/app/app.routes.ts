@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { capitanGuard } from './core/guards/capitan.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { drogueGuard } from './core/guards/drogue.guard';
+import { comptabiliteArgentGuard } from './core/guards/comptabilite-argent.guard';
 
 export const routes: Routes = [
   { 
@@ -41,7 +42,7 @@ export const routes: Routes = [
   { 
     path: 'comptabilite-argent', 
     loadComponent: () => import('./pages/comptabilite-argent/comptabilite-argent.component').then(m => m.ComptabiliteArgentComponent), 
-    canActivate: [authGuard, capitanGuard] 
+    canActivate: [authGuard, comptabiliteArgentGuard] 
   },
   { 
     path: 'armes', 

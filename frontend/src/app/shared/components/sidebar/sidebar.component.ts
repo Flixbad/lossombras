@@ -86,7 +86,7 @@ import { filter } from 'rxjs/operators';
             </svg>
             <span class="relative z-10">Comptabilité Produits</span>
           </a>
-          <a *ngIf="isCapitanOrAbove()" 
+          <a *ngIf="hasComptabiliteArgentAccess()" 
              routerLink="/comptabilite-argent" 
              routerLinkActive="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg"
              [attr.aria-current]="router.url === '/comptabilite-argent' ? 'page' : null"
@@ -237,6 +237,21 @@ export class SidebarComponent implements OnInit {
       'ROLE_CAPITAN'
     ];
     return user.roles.some(role => allowedRoles.includes(role));
+  }
+
+  hasComptabiliteArgentAccess(): boolean {
+    const user = this.currentUser;
+    if (!user || !user.roles || !Array.isArray(user.roles)) {
+      return false;
+    }
+    // Rôles autorisés : Jefe, Segundo Commandanté, Alférez, et Contador uniquement
+    const authorizedRoles = [
+      'ROLE_JEFE',
+      'ROLE_SEGUNDO',
+      'ROLE_ALFERES',
+      'ROLE_CONTADOR'
+    ];
+    return user.roles.some(role => authorizedRoles.includes(role));
   }
 
   logout(): void {
