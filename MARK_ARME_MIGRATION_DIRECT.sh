@@ -12,7 +12,16 @@ echo "📋 Marquage en cours avec sudo mysql..."
 echo ""
 
 # Utiliser sudo mysql directement (pas besoin de mot de passe)
-sudo mysql "$DB_NAME" <<EOF
+# D'abord vérifier que MariaDB est démarré
+if ! sudo systemctl is-active --quiet mariadb; then
+    echo "⚠️  MariaDB n'est pas démarré, démarrage en cours..."
+    sudo systemctl start mariadb
+    sleep 2
+fi
+
+# Se connecter avec sudo mysql et utiliser la base
+sudo mysql <<EOF
+USE ${DB_NAME};
 INSERT IGNORE INTO doctrine_migration_versions (version, executed_at, execution_time)
 VALUES ('DoctrineMigrations\\\\Version20251122000824', NOW(), 0);
 
