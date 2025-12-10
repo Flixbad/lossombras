@@ -56,7 +56,7 @@ import { User } from '../../core/services/auth.service';
       </div>
 
       <!-- Stats du combat -->
-      <div *ngIf="stats && selectedCombatId" class="grid grid-cols-1 md:grid-cols-4 gap-5 md:gap-6">
+      <div *ngIf="stats && selectedCombatId" class="grid grid-cols-1 md:grid-cols-5 gap-5 md:gap-6">
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-100/50">
           <h3 class="text-sm font-semibold text-gray-600 mb-1 uppercase">Total Paris</h3>
           <p class="text-3xl font-bold text-gray-900">{{ stats.totalParis }}</p>
@@ -64,6 +64,10 @@ import { User } from '../../core/services/auth.service';
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-100/50">
           <h3 class="text-sm font-semibold text-gray-600 mb-1 uppercase">Montant Total</h3>
           <p class="text-3xl font-bold text-green-600">{{ stats.montantTotal | number:'1.0-0' }} $</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-100/50">
+          <h3 class="text-sm font-semibold text-gray-600 mb-1 uppercase">Total Commissions</h3>
+          <p class="text-3xl font-bold text-orange-600">{{ stats.totalCommissions | number:'1.0-0' }} $</p>
         </div>
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-100/50">
           <h3 class="text-sm font-semibold text-gray-600 mb-1 uppercase">En Attente</h3>

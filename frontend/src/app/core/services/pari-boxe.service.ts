@@ -25,6 +25,7 @@ export interface PariBoxe {
 export interface PariBoxeStats {
   totalParis: number;
   montantTotal: number;
+  totalCommissions: number;
   parCombatant: Array<{
     nom: string;
     nbParis: number;

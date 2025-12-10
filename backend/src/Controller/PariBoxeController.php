@@ -72,6 +72,7 @@ class PariBoxeController extends AbstractController
         $stats = [
             'totalParis' => count($paris),
             'montantTotal' => 0,
+            'totalCommissions' => 0,
             'parCombatant' => [],
             'parStatut' => [
                 'en_attente' => 0,
@@ -84,6 +85,11 @@ class PariBoxeController extends AbstractController
         foreach ($paris as $pari) {
             $montant = (float) $pari->getMontantMise();
             $stats['montantTotal'] += $montant;
+            
+            // Ajouter les commissions (pour les paris résolus)
+            if ($pari->getCommissionOrganisateur()) {
+                $stats['totalCommissions'] += (float) $pari->getCommissionOrganisateur();
+            }
             
             $combatant = $pari->getCombatantParie();
             if (!isset($stats['parCombatant'][$combatant])) {
