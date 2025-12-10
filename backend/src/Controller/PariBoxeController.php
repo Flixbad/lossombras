@@ -47,6 +47,7 @@ class PariBoxeController extends AbstractController
                     'pseudo' => $groupe->getPseudo(),
                     'email' => $groupe->getEmail(),
                 ] : null,
+                'nomGroupe' => $pari->getNomGroupe() ?? ($groupe ? ($groupe->getPseudo() ?? $groupe->getEmail()) : ''),
                 'montantMise' => $pari->getMontantMise(),
                 'combatId' => $pari->getCombatId(),
                 'combatTitre' => $pari->getCombatTitre(),
@@ -116,15 +117,16 @@ class PariBoxeController extends AbstractController
         $data = json_decode($request->getContent(), true);
         
         $groupeId = $data['groupeId'] ?? null;
+        $nomGroupe = $data['nomGroupe'] ?? null;
         $montantMise = $data['montantMise'] ?? null;
         $combatId = $data['combatId'] ?? null;
         $combatTitre = $data['combatTitre'] ?? null;
         $combatantParie = $data['combatantParie'] ?? null;
         $commentaire = $data['commentaire'] ?? null;
         
-        if (!$groupeId || !$montantMise || !$combatId || !$combatTitre || !$combatantParie) {
+        if ((!$groupeId && !$nomGroupe) || !$montantMise || !$combatId || !$combatTitre || !$combatantParie) {
             return new JsonResponse([
-                'error' => 'Données manquantes. Requis: groupeId, montantMise, combatId, combatTitre, combatantParie'
+                'error' => 'Données manquantes. Requis: (groupeId OU nomGroupe), montantMise, combatId, combatTitre, combatantParie'
             ], Response::HTTP_BAD_REQUEST);
         }
         
@@ -132,17 +134,33 @@ class PariBoxeController extends AbstractController
             return new JsonResponse(['error' => 'Le montant de la mise doit être supérieur à 0'], Response::HTTP_BAD_REQUEST);
         }
         
-        $groupe = $userRepo->find($groupeId);
-        if (!$groupe) {
-            return new JsonResponse(['error' => 'Groupe introuvable'], Response::HTTP_NOT_FOUND);
+        $groupe = null;
+        if ($groupeId) {
+            $groupe = $userRepo->find($groupeId);
+            if (!$groupe) {
+                return new JsonResponse(['error' => 'Groupe introuvable'], Response::HTTP_NOT_FOUND);
+            }
         }
         
-        // Vérifier qu'il n'y a pas déjà un pari pour ce groupe sur ce combat
-        $parisExistants = $em->getRepository(PariBoxe::class)->findBy([
-            'groupe' => $groupe,
-            'combatId' => $combatId,
-            'statut' => 'en_attente'
-        ]);
+        // Vérifier qu'il n'y a pas déjà un pari pour ce groupe/nom sur ce combat
+        $parisExistants = [];
+        if ($groupe) {
+            $parisExistants = $em->getRepository(PariBoxe::class)->findBy([
+                'groupe' => $groupe,
+                'combatId' => $combatId,
+                'statut' => 'en_attente'
+            ]);
+        } elseif ($nomGroupe) {
+            $parisExistants = $em->getRepository(PariBoxe::class)->createQueryBuilder('p')
+                ->where('p.nomGroupe = :nomGroupe')
+                ->andWhere('p.combatId = :combatId')
+                ->andWhere('p.statut = :statut')
+                ->setParameter('nomGroupe', $nomGroupe)
+                ->setParameter('combatId', $combatId)
+                ->setParameter('statut', 'en_attente')
+                ->getQuery()
+                ->getResult();
+        }
         
         if (count($parisExistants) > 0) {
             return new JsonResponse(['error' => 'Ce groupe a déjà un pari en cours sur ce combat'], Response::HTTP_BAD_REQUEST);
@@ -150,6 +168,7 @@ class PariBoxeController extends AbstractController
         
         $pari = new PariBoxe();
         $pari->setGroupe($groupe);
+        $pari->setNomGroupe($nomGroupe);
         $pari->setMontantMise(number_format((float) $montantMise, 2, '.', ''));
         $pari->setCombatId($combatId);
         $pari->setCombatTitre($combatTitre);
@@ -168,11 +187,12 @@ class PariBoxeController extends AbstractController
         
         return new JsonResponse([
             'id' => $pari->getId(),
-            'groupe' => [
+            'groupe' => $groupe ? [
                 'id' => $groupe->getId(),
                 'pseudo' => $groupe->getPseudo(),
                 'email' => $groupe->getEmail(),
-            ],
+            ] : null,
+            'nomGroupe' => $pari->getNomGroupe(),
             'montantMise' => $pari->getMontantMise(),
             'combatId' => $pari->getCombatId(),
             'combatTitre' => $pari->getCombatTitre(),
@@ -232,7 +252,7 @@ class PariBoxeController extends AbstractController
             
             foreach ($paris as $pari) {
                 $groupe = $pari->getGroupe();
-                $groupeNom = $groupe->getPseudo() ?? $groupe->getEmail();
+                $groupeNom = $pari->getNomGroupe() ?? ($groupe ? ($groupe->getPseudo() ?? $groupe->getEmail()) : 'Groupe inconnu');
                 
                 if ($pari->getStatut() === 'gagne') {
                     // Ajout du gain au groupe gagnant

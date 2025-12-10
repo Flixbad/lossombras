@@ -15,8 +15,11 @@ class PariBoxe
     private ?int $id = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?User $groupe = null; // Le groupe qui parie
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $groupe = null; // Le groupe qui parie (optionnel)
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nomGroupe = null; // Nom du groupe si pas de User associé
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $montantMise = null; // Montant total misé
@@ -67,6 +70,17 @@ class PariBoxe
     public function setGroupe(?User $groupe): static
     {
         $this->groupe = $groupe;
+        return $this;
+    }
+
+    public function getNomGroupe(): ?string
+    {
+        return $this->nomGroupe;
+    }
+
+    public function setNomGroupe(?string $nomGroupe): static
+    {
+        $this->nomGroupe = $nomGroupe;
         return $this;
     }
 

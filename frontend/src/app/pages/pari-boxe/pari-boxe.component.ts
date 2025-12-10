@@ -96,7 +96,7 @@ import { User } from '../../core/services/auth.service';
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let pari of paris" class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{{ pari.groupe.pseudo || pari.groupe.email }}</div>
+                  <div class="text-sm font-medium text-gray-900">{{ pari.nomGroupe || (pari.groupe?.pseudo || pari.groupe?.email || 'N/A') }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm text-gray-900">{{ pari.combatTitre }}</div>
@@ -151,14 +151,11 @@ import { User } from '../../core/services/auth.service';
           <form (ngSubmit)="createNewCombat()">
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ID du Combat</label>
-                <input type="text" [(ngModel)]="newCombat.id" name="combatId" required
-                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Titre du Combat</label>
-                <input type="text" [(ngModel)]="newCombat.titre" name="combatTitre" required
-                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nom du Combat</label>
+                <input type="text" [(ngModel)]="newCombat.nom" name="combatNom" required
+                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500"
+                       placeholder="Ex: Carlos vs Miguel">
+                <p class="text-xs text-gray-500 mt-1">Ce nom servira d'identifiant unique</p>
               </div>
               <div class="flex gap-3 pt-4">
                 <button type="button" (click)="showNewCombatModal = false"
@@ -182,14 +179,11 @@ import { User } from '../../core/services/auth.service';
           <form (ngSubmit)="createPari()">
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Groupe</label>
-                <select [(ngModel)]="newPari.groupeId" name="groupeId" required
-                        class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500">
-                  <option value="">Sélectionner un groupe</option>
-                  <option *ngFor="let user of users" [value]="user.id">
-                    {{ user.pseudo || user.email }}
-                  </option>
-                </select>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nom du Groupe</label>
+                <input type="text" [(ngModel)]="newPari.nomGroupe" name="nomGroupe" required
+                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500"
+                       placeholder="Ex: Los Sombras, Vagos, etc.">
+                <p class="text-xs text-gray-500 mt-1">Écrivez librement le nom du groupe</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Montant de la mise ($)</label>
@@ -270,6 +264,7 @@ export class PariBoxeComponent implements OnInit {
   selectedCombatId: string = '';
   combatantsUniques: string[] = [];
   combatsUniques: Array<{ id: string; titre: string }> = [];
+  combatsCrees: Array<{ id: string; titre: string }> = []; // Combats créés localement
   
   showNewCombatModal = false;
   showNewPariModal = false;
@@ -278,7 +273,7 @@ export class PariBoxeComponent implements OnInit {
   resolvantCombat = false;
   
   newPari: CreatePariBoxeRequest = {
-    groupeId: 0,
+    nomGroupe: '',
     montantMise: 0,
     combatId: '',
     combatTitre: '',
@@ -286,7 +281,7 @@ export class PariBoxeComponent implements OnInit {
     commentaire: ''
   };
   
-  newCombat = { id: '', titre: '' };
+  newCombat = { nom: '' };
   combatantGagnant = '';
 
   constructor(
@@ -297,6 +292,40 @@ export class PariBoxeComponent implements OnInit {
   ngOnInit() {
     this.loadUsers();
     this.loadParis();
+    this.loadCombatsCrees();
+  }
+
+  loadCombatsCrees() {
+    const stored = localStorage.getItem('combats_boxe');
+    if (stored) {
+      this.combatsCrees = JSON.parse(stored);
+      this.updateCombatsList();
+    }
+  }
+
+  saveCombatsCrees() {
+    localStorage.setItem('combats_boxe', JSON.stringify(this.combatsCrees));
+  }
+
+  updateCombatsList() {
+    // Fusionner les combats des paris et les combats créés localement
+    const combatsMap = new Map<string, string>();
+    
+    // Ajouter les combats des paris
+    this.paris.forEach(pari => {
+      if (!combatsMap.has(pari.combatId)) {
+        combatsMap.set(pari.combatId, pari.combatTitre);
+      }
+    });
+    
+    // Ajouter les combats créés localement
+    this.combatsCrees.forEach(combat => {
+      if (!combatsMap.has(combat.id)) {
+        combatsMap.set(combat.id, combat.titre);
+      }
+    });
+    
+    this.combatsUniques = Array.from(combatsMap.entries()).map(([id, titre]) => ({ id, titre }));
   }
 
   loadUsers() {
@@ -313,7 +342,7 @@ export class PariBoxeComponent implements OnInit {
     this.pariBoxeService.getParis(combatId).subscribe({
       next: (paris) => {
         this.paris = paris;
-        this.extractCombats();
+        this.updateCombatsList();
         this.extractCombatants();
         if (this.selectedCombatId) {
           this.loadStats();
@@ -343,15 +372,6 @@ export class PariBoxeComponent implements OnInit {
     });
   }
 
-  extractCombats() {
-    const combatsMap = new Map<string, string>();
-    this.paris.forEach(pari => {
-      if (!combatsMap.has(pari.combatId)) {
-        combatsMap.set(pari.combatId, pari.combatTitre);
-      }
-    });
-    this.combatsUniques = Array.from(combatsMap.entries()).map(([id, titre]) => ({ id, titre }));
-  }
 
   extractCombatants() {
     if (!this.selectedCombatId) {
@@ -366,10 +386,31 @@ export class PariBoxeComponent implements OnInit {
   }
 
   createNewCombat() {
-    this.selectedCombatId = this.newCombat.id;
+    if (!this.newCombat.nom || this.newCombat.nom.trim() === '') {
+      alert('Veuillez entrer un nom pour le combat');
+      return;
+    }
+    
+    // Créer un ID unique à partir du nom (normalisé)
+    const combatId = this.newCombat.nom.trim().toLowerCase().replace(/\s+/g, '_');
+    const combatTitre = this.newCombat.nom.trim();
+    
+    // Vérifier si le combat existe déjà
+    if (this.combatsUniques.some(c => c.id === combatId)) {
+      alert('Un combat avec ce nom existe déjà');
+      return;
+    }
+    
+    // Ajouter le combat à la liste locale
+    const nouveauCombat = { id: combatId, titre: combatTitre };
+    this.combatsCrees.push(nouveauCombat);
+    this.saveCombatsCrees();
+    this.updateCombatsList();
+    
+    // Sélectionner le nouveau combat
+    this.selectedCombatId = combatId;
     this.showNewCombatModal = false;
-    this.newCombat = { id: '', titre: '' };
-    this.loadParis();
+    this.newCombat = { nom: '' };
   }
 
   openNewPariModal() {
@@ -379,7 +420,7 @@ export class PariBoxeComponent implements OnInit {
     }
     const combat = this.combatsUniques.find(c => c.id === this.selectedCombatId);
     this.newPari = {
-      groupeId: 0,
+      nomGroupe: '',
       montantMise: 0,
       combatId: this.selectedCombatId,
       combatTitre: combat?.titre || '',
@@ -390,7 +431,7 @@ export class PariBoxeComponent implements OnInit {
   }
 
   createPari() {
-    if (!this.newPari.groupeId || !this.newPari.montantMise || !this.newPari.combatantParie) {
+    if (!this.newPari.nomGroupe || !this.newPari.montantMise || !this.newPari.combatantParie) {
       alert('Veuillez remplir tous les champs requis');
       return;
     }
@@ -401,11 +442,12 @@ export class PariBoxeComponent implements OnInit {
         this.creatingPari = false;
         this.showNewPariModal = false;
         this.loadCombatData();
+        const combat = this.combatsUniques.find(c => c.id === this.selectedCombatId);
         this.newPari = {
-          groupeId: 0,
+          nomGroupe: '',
           montantMise: 0,
           combatId: this.selectedCombatId,
-          combatTitre: this.newPari.combatTitre,
+          combatTitre: combat?.titre || '',
           combatantParie: '',
           commentaire: ''
         };

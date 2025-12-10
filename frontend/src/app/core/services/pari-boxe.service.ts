@@ -4,11 +4,12 @@ import { Observable } from 'rxjs';
 
 export interface PariBoxe {
   id: number;
-  groupe: {
+  groupe?: {
     id: number;
     pseudo?: string;
     email: string;
-  };
+  } | null;
+  nomGroupe?: string;
   montantMise: string;
   combatId: string;
   combatTitre: string;
@@ -38,7 +39,8 @@ export interface PariBoxeStats {
 }
 
 export interface CreatePariBoxeRequest {
-  groupeId: number;
+  groupeId?: number;
+  nomGroupe?: string;
   montantMise: number;
   combatId: string;
   combatTitre: string;
