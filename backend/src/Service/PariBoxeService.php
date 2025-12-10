@@ -7,7 +7,7 @@ use App\Repository\PariBoxeRepository;
 
 class PariBoxeService
 {
-    private const COMMISSION_ORGANISATEUR = 0.15; // 15% que l'organisateur prend sur le pot total
+    private const COMMISSION_ORGANISATEUR = 0.25; // 25% que l'organisateur prend sur le pot total
 
     public function __construct(
         private PariBoxeRepository $pariBoxeRepository
@@ -43,9 +43,9 @@ class PariBoxeService
             }
         }
         
-        // L'organisateur prend 15% sur le montant total des perdants (le pot)
+        // L'organisateur prend 25% sur le montant total des perdants (le pot)
         $commissionTotaleOrganisateur = $montantTotalPerdants * self::COMMISSION_ORGANISATEUR;
-        $montantDistribuable = $montantTotalPerdants - $commissionTotaleOrganisateur; // 85% du pot
+        $montantDistribuable = $montantTotalPerdants - $commissionTotaleOrganisateur; // 75% du pot
         
         $totalCommission = 0;
         $totalGainsDistribues = 0;
@@ -59,7 +59,7 @@ class PariBoxeService
             $pari->setCommissionOrganisateur('0.00');
         }
         
-        // Traiter les paris gagnants : ils récupèrent leur mise + leur part des gains (85% du pot)
+        // Traiter les paris gagnants : ils récupèrent leur mise + leur part des gains (75% du pot)
         if ($montantTotalPerdants > 0 && count($parisGagnants) > 0) {
             // Répartir les 85% du pot entre les gagnants proportionnellement à leur mise
             foreach ($parisGagnants as $pari) {
@@ -68,7 +68,7 @@ class PariBoxeService
                 // Proportion de la mise du pari dans le total des gagnants
                 $proportion = $montantTotalGagnants > 0 ? $mise / $montantTotalGagnants : 0;
                 
-                // Part du gagnant dans les 85% distribuables
+                // Part du gagnant dans les 75% distribuables
                 $partGains = $montantDistribuable * $proportion;
                 
                 // Le groupe récupère sa mise + sa part des gains

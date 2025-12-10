@@ -276,13 +276,13 @@ class PariBoxeController extends AbstractController
                 }
             }
             
-            // Ajouter la commission totale de l'organisateur (15% du pot total)
+            // Ajouter la commission totale de l'organisateur (25% du pot total)
             if ($stats['totalCommission'] > 0) {
                 $argentCommission = new Argent();
                 $argentCommission->setType('ajout');
                 $argentCommission->setMontant(number_format($stats['totalCommission'], 2, '.', ''));
                 $argentCommission->setCommentaire(sprintf(
-                    'Pari Boxe - Commission organisateur 15%% (pot total: %s$) - Combat: %s',
+                    'Pari Boxe - Commission organisateur 25%% (pot total: %s$) - Combat: %s',
                     number_format($stats['montantTotalPerdants'], 2, '.', ''),
                     $paris[0]->getCombatTitre()
                 ));
