@@ -1,0 +1,295 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\PariBoxe;
+use App\Entity\Argent;
+use App\Repository\PariBoxeRepository;
+use App\Repository\UserRepository;
+use App\Service\PariBoxeService;
+use App\Service\DateFormatterService;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+
+#[Route('/api/pari-boxe')]
+class PariBoxeController extends AbstractController
+{
+    #[Route('', name: 'api_pari_boxe_list', methods: ['GET'])]
+    public function list(
+        PariBoxeRepository $pariRepo,
+        DateFormatterService $dateFormatter,
+        Request $request
+    ): JsonResponse {
+        $combatId = $request->query->get('combatId');
+        $statut = $request->query->get('statut');
+        
+        if ($combatId) {
+            if ($statut) {
+                $paris = $pariRepo->findByCombatIdAndStatut($combatId, $statut);
+            } else {
+                $paris = $pariRepo->findByCombatId($combatId);
+            }
+        } else {
+            $paris = $pariRepo->findAll();
+        }
+        
+        $data = [];
+        foreach ($paris as $pari) {
+            $groupe = $pari->getGroupe();
+            $data[] = [
+                'id' => $pari->getId(),
+                'groupe' => $groupe ? [
+                    'id' => $groupe->getId(),
+                    'pseudo' => $groupe->getPseudo(),
+                    'email' => $groupe->getEmail(),
+                ] : null,
+                'montantMise' => $pari->getMontantMise(),
+                'combatId' => $pari->getCombatId(),
+                'combatTitre' => $pari->getCombatTitre(),
+                'combatantParie' => $pari->getCombatantParie(),
+                'statut' => $pari->getStatut(),
+                'gainCalcule' => $pari->getGainCalcule(),
+                'commissionOrganisateur' => $pari->getCommissionOrganisateur(),
+                'commentaire' => $pari->getCommentaire(),
+                'createdAt' => $dateFormatter->formatDateTimeISO($pari->getCreatedAt()),
+                'updatedAt' => $pari->getUpdatedAt() ? $dateFormatter->formatDateTimeISO($pari->getUpdatedAt()) : null,
+            ];
+        }
+        
+        return new JsonResponse($data);
+    }
+
+    #[Route('/stats/{combatId}', name: 'api_pari_boxe_stats', methods: ['GET'])]
+    public function stats(string $combatId, PariBoxeRepository $pariRepo): JsonResponse
+    {
+        $paris = $pariRepo->findByCombatId($combatId);
+        
+        $stats = [
+            'totalParis' => count($paris),
+            'montantTotal' => 0,
+            'parCombatant' => [],
+            'parStatut' => [
+                'en_attente' => 0,
+                'gagne' => 0,
+                'perdu' => 0,
+                'annule' => 0,
+            ],
+        ];
+        
+        foreach ($paris as $pari) {
+            $montant = (float) $pari->getMontantMise();
+            $stats['montantTotal'] += $montant;
+            
+            $combatant = $pari->getCombatantParie();
+            if (!isset($stats['parCombatant'][$combatant])) {
+                $stats['parCombatant'][$combatant] = [
+                    'nom' => $combatant,
+                    'nbParis' => 0,
+                    'montantTotal' => 0,
+                ];
+            }
+            $stats['parCombatant'][$combatant]['nbParis']++;
+            $stats['parCombatant'][$combatant]['montantTotal'] += $montant;
+            
+            $statut = $pari->getStatut();
+            if (isset($stats['parStatut'][$statut])) {
+                $stats['parStatut'][$statut]++;
+            }
+        }
+        
+        $stats['parCombatant'] = array_values($stats['parCombatant']);
+        
+        return new JsonResponse($stats);
+    }
+
+    #[Route('', name: 'api_pari_boxe_create', methods: ['POST'])]
+    public function create(
+        Request $request,
+        EntityManagerInterface $em,
+        UserRepository $userRepo,
+        DateFormatterService $dateFormatter
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        
+        $groupeId = $data['groupeId'] ?? null;
+        $montantMise = $data['montantMise'] ?? null;
+        $combatId = $data['combatId'] ?? null;
+        $combatTitre = $data['combatTitre'] ?? null;
+        $combatantParie = $data['combatantParie'] ?? null;
+        $commentaire = $data['commentaire'] ?? null;
+        
+        if (!$groupeId || !$montantMise || !$combatId || !$combatTitre || !$combatantParie) {
+            return new JsonResponse([
+                'error' => 'Données manquantes. Requis: groupeId, montantMise, combatId, combatTitre, combatantParie'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        
+        if ($montantMise <= 0) {
+            return new JsonResponse(['error' => 'Le montant de la mise doit être supérieur à 0'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        $groupe = $userRepo->find($groupeId);
+        if (!$groupe) {
+            return new JsonResponse(['error' => 'Groupe introuvable'], Response::HTTP_NOT_FOUND);
+        }
+        
+        // Vérifier qu'il n'y a pas déjà un pari pour ce groupe sur ce combat
+        $parisExistants = $em->getRepository(PariBoxe::class)->findBy([
+            'groupe' => $groupe,
+            'combatId' => $combatId,
+            'statut' => 'en_attente'
+        ]);
+        
+        if (count($parisExistants) > 0) {
+            return new JsonResponse(['error' => 'Ce groupe a déjà un pari en cours sur ce combat'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        $pari = new PariBoxe();
+        $pari->setGroupe($groupe);
+        $pari->setMontantMise(number_format((float) $montantMise, 2, '.', ''));
+        $pari->setCombatId($combatId);
+        $pari->setCombatTitre($combatTitre);
+        $pari->setCombatantParie($combatantParie);
+        $pari->setCommentaire($commentaire);
+        
+        try {
+            $em->persist($pari);
+            $em->flush();
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors de l\'enregistrement du pari',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        
+        return new JsonResponse([
+            'id' => $pari->getId(),
+            'groupe' => [
+                'id' => $groupe->getId(),
+                'pseudo' => $groupe->getPseudo(),
+                'email' => $groupe->getEmail(),
+            ],
+            'montantMise' => $pari->getMontantMise(),
+            'combatId' => $pari->getCombatId(),
+            'combatTitre' => $pari->getCombatTitre(),
+            'combatantParie' => $pari->getCombatantParie(),
+            'statut' => $pari->getStatut(),
+            'commentaire' => $pari->getCommentaire(),
+            'createdAt' => $dateFormatter->formatDateTimeISO($pari->getCreatedAt()),
+        ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/{id}', name: 'api_pari_boxe_delete', methods: ['DELETE'])]
+    public function delete(int $id, PariBoxeRepository $pariRepo, EntityManagerInterface $em): JsonResponse
+    {
+        $pari = $pariRepo->find($id);
+        if (!$pari) {
+            return new JsonResponse(['error' => 'Pari introuvable'], Response::HTTP_NOT_FOUND);
+        }
+        
+        if ($pari->getStatut() !== 'en_attente') {
+            return new JsonResponse(['error' => 'Impossible de supprimer un pari déjà résolu'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        $em->remove($pari);
+        $em->flush();
+        
+        return new JsonResponse(['message' => 'Pari supprimé']);
+    }
+
+    #[Route('/resoudre', name: 'api_pari_boxe_resoudre', methods: ['POST'])]
+    public function resoudre(
+        Request $request,
+        PariBoxeService $pariBoxeService,
+        EntityManagerInterface $em,
+        DateFormatterService $dateFormatter
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        
+        $combatId = $data['combatId'] ?? null;
+        $combatantGagnant = $data['combatantGagnant'] ?? null;
+        
+        if (!$combatId || !$combatantGagnant) {
+            return new JsonResponse([
+                'error' => 'Données manquantes. Requis: combatId, combatantGagnant'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        
+        try {
+            // Résoudre le combat
+            $stats = $pariBoxeService->resoudreCombat($combatId, $combatantGagnant);
+            
+            // Sauvegarder tous les paris modifiés
+            $em->flush();
+            
+            // Créer les entrées dans la comptabilité argent
+            $paris = $em->getRepository(PariBoxe::class)->findByCombatId($combatId);
+            $user = $this->getUser();
+            
+            foreach ($paris as $pari) {
+                $groupe = $pari->getGroupe();
+                $groupeNom = $groupe->getPseudo() ?? $groupe->getEmail();
+                
+                if ($pari->getStatut() === 'gagne') {
+                    // Ajout du gain au groupe gagnant
+                    $argentGain = new Argent();
+                    $argentGain->setType('ajout');
+                    $argentGain->setMontant($pari->getGainCalcule());
+                    $argentGain->setCommentaire(sprintf(
+                        'Pari Boxe - Gain: %s$ (Mise: %s$) - Combat: %s - %s',
+                        $pari->getGainCalcule(),
+                        $pari->getMontantMise(),
+                        $pari->getCombatTitre(),
+                        $groupeNom
+                    ));
+                    $argentGain->setUser($user);
+                    $em->persist($argentGain);
+                    
+                    // Retrait de la commission (15%)
+                    if ((float) $pari->getCommissionOrganisateur() > 0) {
+                        $argentCommission = new Argent();
+                        $argentCommission->setType('retrait');
+                        $argentCommission->setMontant($pari->getCommissionOrganisateur());
+                        $argentCommission->setCommentaire(sprintf(
+                            'Pari Boxe - Commission organisateur 15%% - Combat: %s',
+                            $pari->getCombatTitre()
+                        ));
+                        $argentCommission->setUser($user);
+                        $em->persist($argentCommission);
+                    }
+                } elseif ($pari->getStatut() === 'perdu') {
+                    // Retrait de la mise (déjà perdue) + commission 25%
+                    if ((float) $pari->getCommissionOrganisateur() > 0) {
+                        $argentCommission = new Argent();
+                        $argentCommission->setType('ajout');
+                        $argentCommission->setMontant($pari->getCommissionOrganisateur());
+                        $argentCommission->setCommentaire(sprintf(
+                            'Pari Boxe - Commission organisateur 25%% (perdant) - Combat: %s',
+                            $pari->getCombatTitre()
+                        ));
+                        $argentCommission->setUser($user);
+                        $em->persist($argentCommission);
+                    }
+                }
+            }
+            
+            $em->flush();
+            
+            return new JsonResponse([
+                'message' => 'Combat résolu avec succès',
+                'stats' => $stats
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors de la résolution du combat',
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+}
+

@@ -45,6 +45,11 @@ export const routes: Routes = [
     canActivate: [authGuard, comptabiliteArgentGuard] 
   },
   { 
+    path: 'pari-boxe', 
+    loadComponent: () => import('./pages/pari-boxe/pari-boxe.component').then(m => m.PariBoxeComponent), 
+    canActivate: [authGuard, capitanGuard] 
+  },
+  { 
     path: 'armes', 
     loadComponent: () => import('./pages/armes/armes.component').then(m => m.ArmesComponent), 
     canActivate: [authGuard, adminGuard] 
