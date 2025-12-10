@@ -269,32 +269,25 @@ class PariBoxeController extends AbstractController
                     $argentGain->setUser($user);
                     $em->persist($argentGain);
                     
-                    // Retrait de la commission (15%)
-                    if ((float) $pari->getCommissionOrganisateur() > 0) {
-                        $argentCommission = new Argent();
-                        $argentCommission->setType('retrait');
-                        $argentCommission->setMontant($pari->getCommissionOrganisateur());
-                        $argentCommission->setCommentaire(sprintf(
-                            'Pari Boxe - Commission organisateur 15%% - Combat: %s',
-                            $pari->getCombatTitre()
-                        ));
-                        $argentCommission->setUser($user);
-                        $em->persist($argentCommission);
-                    }
                 } elseif ($pari->getStatut() === 'perdu') {
-                    // Retrait de la mise (déjà perdue) + commission 25%
-                    if ((float) $pari->getCommissionOrganisateur() > 0) {
-                        $argentCommission = new Argent();
-                        $argentCommission->setType('ajout');
-                        $argentCommission->setMontant($pari->getCommissionOrganisateur());
-                        $argentCommission->setCommentaire(sprintf(
-                            'Pari Boxe - Commission organisateur 25%% (perdant) - Combat: %s',
-                            $pari->getCombatTitre()
-                        ));
-                        $argentCommission->setUser($user);
-                        $em->persist($argentCommission);
-                    }
+                    // Les perdants perdent leur mise, qui va aux gagnants
+                    // Mais l'organisateur prend 15% sur cette mise aussi
+                    // (déjà calculé dans la commission totale)
                 }
+            }
+            
+            // Ajouter la commission totale de l'organisateur (15% du pot total)
+            if ($stats['totalCommission'] > 0) {
+                $argentCommission = new Argent();
+                $argentCommission->setType('ajout');
+                $argentCommission->setMontant(number_format($stats['totalCommission'], 2, '.', ''));
+                $argentCommission->setCommentaire(sprintf(
+                    'Pari Boxe - Commission organisateur 15%% (pot total: %s$) - Combat: %s',
+                    number_format($stats['montantTotalPerdants'], 2, '.', ''),
+                    $paris[0]->getCombatTitre()
+                ));
+                $argentCommission->setUser($user);
+                $em->persist($argentCommission);
             }
             
             $em->flush();

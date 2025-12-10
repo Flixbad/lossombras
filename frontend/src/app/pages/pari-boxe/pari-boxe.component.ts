@@ -236,8 +236,9 @@ import { User } from '../../core/services/auth.service';
               <div *ngIf="stats" class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                 <p class="text-sm text-yellow-800">
                   <strong>Attention :</strong> Cette action est irréversible. Les gains seront calculés automatiquement :
-                  <br>- Commission 15% pour les gagnants
-                  <br>- Commission 25% pour les perdants
+                  <br>- L'organisateur prend 15% sur le pot total (montant des perdants)
+                  <br>- Les gagnants se partagent les 85% restants proportionnellement
+                  <br>- Les perdants perdent leur mise
                 </p>
               </div>
               <div class="flex gap-3 pt-4">
