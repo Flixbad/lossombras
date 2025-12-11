@@ -241,17 +241,23 @@ import { User } from '../../core/services/auth.service';
                 <select [(ngModel)]="combatantGagnant" name="combatantGagnant" required
                         class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500">
                   <option value="">Sélectionner le gagnant</option>
+                  <option value="AUCUN">Aucun gagnant (Organisateur garde tout)</option>
                   <option *ngFor="let combatant of combatantsUniques" [value]="combatant">
                     {{ combatant }}
                   </option>
                 </select>
               </div>
               <div *ngIf="stats" class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                <p class="text-sm text-yellow-800">
+                <p class="text-sm text-yellow-800" *ngIf="combatantGagnant !== 'AUCUN'">
                   <strong>Attention :</strong> Cette action est irréversible. Les gains seront calculés automatiquement :
                   <br>- L'organisateur prend 25% sur le total de toutes les mises
                   <br>- Les gagnants récupèrent leur mise + part des gains (mises perdants - commission)
                   <br>- Les perdants perdent leur mise
+                </p>
+                <p class="text-sm text-red-800" *ngIf="combatantGagnant === 'AUCUN'">
+                  <strong>Attention :</strong> En sélectionnant "Aucun gagnant", l'organisateur garde 100% de toutes les mises.
+                  <br>Tous les paris seront marqués comme perdants.
+                  <br>Cette action est irréversible.
                 </p>
               </div>
               <div class="flex gap-3 pt-4">
@@ -501,23 +507,33 @@ export class PariBoxeComponent implements OnInit {
 
   resoudreCombat() {
     if (!this.combatantGagnant) {
-      alert('Veuillez sélectionner le gagnant');
+      alert('Veuillez sélectionner le gagnant ou "Aucun gagnant"');
       return;
     }
 
-    if (!confirm('Êtes-vous sûr de vouloir résoudre ce combat ? Cette action est irréversible.')) {
+    const message = this.combatantGagnant === 'AUCUN' 
+      ? 'Êtes-vous sûr ? Aucun gagnant = l\'organisateur garde 100% de toutes les mises. Cette action est irréversible.'
+      : 'Êtes-vous sûr de vouloir résoudre ce combat ? Cette action est irréversible.';
+
+    if (!confirm(message)) {
       return;
     }
 
     this.resolvantCombat = true;
+    // Envoyer null si "AUCUN" est sélectionné
+    const combatantGagnant = this.combatantGagnant === 'AUCUN' ? null : this.combatantGagnant;
+    
     this.pariBoxeService.resoudreCombat({
       combatId: this.selectedCombatId,
-      combatantGagnant: this.combatantGagnant
+      combatantGagnant: combatantGagnant
     }).subscribe({
       next: (result) => {
         this.resolvantCombat = false;
         this.showResoudreModal = false;
-        alert('Combat résolu avec succès !');
+        const message = combatantGagnant === null 
+          ? 'Combat résolu avec succès ! Aucun gagnant - Organisateur garde 100% des mises.'
+          : 'Combat résolu avec succès !';
+        alert(message);
         this.loadCombatData();
       },
       error: (err) => {

@@ -16,10 +16,10 @@ class PariBoxeService
     /**
      * Résout un combat en déterminant les gagnants et perdants
      * @param string $combatId L'ID du combat
-     * @param string $combatantGagnant Le nom du combatant/groupe gagnant
+     * @param string|null $combatantGagnant Le nom du combatant/groupe gagnant (null = aucun gagnant, organisateur garde tout)
      * @return array Retourne les statistiques du combat résolu
      */
-    public function resoudreCombat(string $combatId, string $combatantGagnant): array
+    public function resoudreCombat(string $combatId, ?string $combatantGagnant = null): array
     {
         $paris = $this->pariBoxeRepository->findByCombatId($combatId);
         
@@ -45,6 +45,35 @@ class PariBoxeService
                 $parisPerdants[] = $pari;
                 $montantTotalPerdants += $mise;
             }
+        }
+        
+        // Si aucun gagnant (combatantGagnant est null), l'organisateur garde tout (100%)
+        if ($combatantGagnant === null || $combatantGagnant === '') {
+            $totalCommission = $montantTotalToutesMises;
+            $totalGainsDistribues = 0;
+            
+            // Tous les paris sont perdants
+            foreach ($paris as $pari) {
+                $mise = (float) $pari->getMontantMise();
+                $proportion = $montantTotalToutesMises > 0 ? $mise / $montantTotalToutesMises : 0;
+                $commissionIndividuelle = $montantTotalToutesMises * $proportion;
+                
+                $pari->setStatut('perdu');
+                $pari->setGainCalcule('0.00');
+                $pari->setCommissionOrganisateur(number_format($commissionIndividuelle, 2, '.', ''));
+            }
+            
+            return [
+                'combatId' => $combatId,
+                'combatantGagnant' => null,
+                'nbParisGagnants' => 0,
+                'nbParisPerdants' => count($paris),
+                'montantTotalGagnants' => 0,
+                'montantTotalPerdants' => $montantTotalToutesMises,
+                'montantTotalToutesMises' => $montantTotalToutesMises,
+                'totalCommission' => $totalCommission,
+                'totalGainsDistribues' => $totalGainsDistribues,
+            ];
         }
         
         // L'organisateur prend 25% sur le montant total de TOUTES les mises (pas seulement les perdants)

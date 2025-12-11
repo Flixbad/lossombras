@@ -335,12 +335,17 @@ class PariBoxeController extends AbstractController
         $data = json_decode($request->getContent(), true);
         
         $combatId = $data['combatId'] ?? null;
-        $combatantGagnant = $data['combatantGagnant'] ?? null;
+        $combatantGagnant = $data['combatantGagnant'] ?? null; // null ou '' = aucun gagnant
         
-        if (!$combatId || !$combatantGagnant) {
+        if (!$combatId) {
             return new JsonResponse([
-                'error' => 'Données manquantes. Requis: combatId, combatantGagnant'
+                'error' => 'Données manquantes. Requis: combatId'
             ], Response::HTTP_BAD_REQUEST);
+        }
+        
+        // Normaliser: convertir chaîne vide en null pour "aucun gagnant"
+        if ($combatantGagnant === '') {
+            $combatantGagnant = null;
         }
         
         try {
