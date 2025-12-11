@@ -252,52 +252,6 @@ class PariBoxeController extends AbstractController
             // Sauvegarder tous les paris modifiés
             $em->flush();
             
-            // Créer les entrées dans la comptabilité argent
-            $paris = $em->getRepository(PariBoxe::class)->findByCombatId($combatId);
-            $user = $this->getUser();
-            
-            foreach ($paris as $pari) {
-                $groupe = $pari->getGroupe();
-                $groupeNom = $pari->getNomGroupe() ?? ($groupe ? ($groupe->getPseudo() ?? $groupe->getEmail()) : 'Groupe inconnu');
-                
-                if ($pari->getStatut() === 'gagne') {
-                    // Ajout du gain au groupe gagnant
-                    $argentGain = new Argent();
-                    $argentGain->setType('ajout');
-                    $argentGain->setMontant($pari->getGainCalcule());
-                    $argentGain->setCommentaire(sprintf(
-                        'Pari Boxe - Gain: %s$ (Mise: %s$) - Combat: %s - %s',
-                        $pari->getGainCalcule(),
-                        $pari->getMontantMise(),
-                        $pari->getCombatTitre(),
-                        $groupeNom
-                    ));
-                    $argentGain->setUser($user);
-                    $em->persist($argentGain);
-                    
-                } elseif ($pari->getStatut() === 'perdu') {
-                    // Les perdants perdent leur mise, qui va aux gagnants
-                    // Mais l'organisateur prend 15% sur cette mise aussi
-                    // (déjà calculé dans la commission totale)
-                }
-            }
-            
-            // Ajouter la commission totale de l'organisateur (25% du pot total)
-            if ($stats['totalCommission'] > 0) {
-                $argentCommission = new Argent();
-                $argentCommission->setType('ajout');
-                $argentCommission->setMontant(number_format($stats['totalCommission'], 2, '.', ''));
-                $argentCommission->setCommentaire(sprintf(
-                    'Pari Boxe - Commission organisateur 25%% (pot total: %s$) - Combat: %s',
-                    number_format($stats['montantTotalPerdants'], 2, '.', ''),
-                    $paris[0]->getCombatTitre()
-                ));
-                $argentCommission->setUser($user);
-                $em->persist($argentCommission);
-            }
-            
-            $em->flush();
-            
             return new JsonResponse([
                 'message' => 'Combat résolu avec succès',
                 'stats' => $stats
