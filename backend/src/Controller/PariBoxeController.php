@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\PariBoxe;
-use App\Entity\Argent;
 use App\Repository\PariBoxeRepository;
 use App\Repository\UserRepository;
 use App\Service\PariBoxeService;
