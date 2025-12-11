@@ -32,13 +32,23 @@ import { User } from '../../core/services/auth.service';
         <div class="flex flex-col sm:flex-row gap-4 items-end">
           <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-2">Combat actif :</label>
-            <select [(ngModel)]="selectedCombatId" (change)="loadCombatData()" 
-                    class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500">
-              <option value="">Tous les combats</option>
-              <option *ngFor="let combat of combatsUniques" [value]="combat.id">
-                {{ combat.titre }}
-              </option>
-            </select>
+            <div class="flex gap-2">
+              <select [(ngModel)]="selectedCombatId" (change)="loadCombatData()" 
+                      class="flex-1 px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                <option value="">Tous les combats</option>
+                <option *ngFor="let combat of combatsUniques" [value]="combat.id">
+                  {{ combat.titre }}
+                </option>
+              </select>
+              <button *ngIf="selectedCombatId" 
+                      (click)="deleteCombat()"
+                      class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                      title="Supprimer le combat et tous ses paris">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="flex gap-2">
             <button *ngIf="selectedCombatId" 
@@ -131,8 +141,7 @@ import { User } from '../../core/services/auth.service';
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button *ngIf="pari.statut === 'en_attente'" 
-                          (click)="deletePari(pari.id)"
+                  <button (click)="deletePari(pari.id)"
                           class="text-red-600 hover:text-red-900">
                     Supprimer
                   </button>
@@ -473,6 +482,34 @@ export class PariBoxeComponent implements OnInit {
       },
       error: (err) => {
         alert(err.error?.error || 'Erreur lors de la suppression du pari');
+      }
+    });
+  }
+
+  deleteCombat() {
+    if (!this.selectedCombatId) return;
+    
+    const combat = this.combatsUniques.find(c => c.id === this.selectedCombatId);
+    const nomCombat = combat?.titre || this.selectedCombatId;
+    
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le combat "${nomCombat}" et TOUS ses paris ? Cette action est irréversible.`)) {
+      return;
+    }
+    
+    this.pariBoxeService.deleteCombat(this.selectedCombatId).subscribe({
+      next: (result) => {
+        alert(`Combat supprimé avec succès. ${result.nbParisSupprimes} pari(s) supprimé(s).`);
+        
+        // Retirer le combat de la liste locale
+        this.combatsCrees = this.combatsCrees.filter(c => c.id !== this.selectedCombatId);
+        this.saveCombatsCrees();
+        
+        // Réinitialiser la sélection
+        this.selectedCombatId = '';
+        this.loadCombatData();
+      },
+      error: (err) => {
+        alert(err.error?.error || 'Erreur lors de la suppression du combat');
       }
     });
   }

@@ -86,5 +86,9 @@ export class PariBoxeService {
   resoudreCombat(request: ResoudreCombatRequest): Observable<{ message: string; stats: any }> {
     return this.http.post<{ message: string; stats: any }>(`${this.apiUrl}/resoudre`, request);
   }
+
+  deleteCombat(combatId: string): Observable<{ message: string; combatId: string; nbParisSupprimes: number }> {
+    return this.http.delete<{ message: string; combatId: string; nbParisSupprimes: number }>(`${this.apiUrl}/combat/${combatId}`);
+  }
 }
 

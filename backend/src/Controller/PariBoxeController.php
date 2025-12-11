@@ -216,14 +216,34 @@ class PariBoxeController extends AbstractController
             return new JsonResponse(['error' => 'Pari introuvable'], Response::HTTP_NOT_FOUND);
         }
         
-        if ($pari->getStatut() !== 'en_attente') {
-            return new JsonResponse(['error' => 'Impossible de supprimer un pari déjà résolu'], Response::HTTP_BAD_REQUEST);
-        }
-        
         $em->remove($pari);
         $em->flush();
         
         return new JsonResponse(['message' => 'Pari supprimé']);
+    }
+
+    #[Route('/combat/{combatId}', name: 'api_pari_boxe_delete_combat', methods: ['DELETE'])]
+    public function deleteCombat(string $combatId, PariBoxeRepository $pariRepo, EntityManagerInterface $em): JsonResponse
+    {
+        $paris = $pariRepo->findByCombatId($combatId);
+        
+        if (count($paris) === 0) {
+            return new JsonResponse(['error' => 'Combat introuvable'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $nbParisSupprimes = 0;
+        foreach ($paris as $pari) {
+            $em->remove($pari);
+            $nbParisSupprimes++;
+        }
+        
+        $em->flush();
+        
+        return new JsonResponse([
+            'message' => 'Combat et tous ses paris supprimés',
+            'combatId' => $combatId,
+            'nbParisSupprimes' => $nbParisSupprimes
+        ]);
     }
 
     #[Route('/resoudre', name: 'api_pari_boxe_resoudre', methods: ['POST'])]
