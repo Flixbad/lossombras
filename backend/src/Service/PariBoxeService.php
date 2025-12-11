@@ -7,7 +7,7 @@ use App\Repository\PariBoxeRepository;
 
 class PariBoxeService
 {
-    private const COMMISSION_ORGANISATEUR = 0.25; // 25% que l'organisateur prend sur le pot total
+    private const COMMISSION_ORGANISATEUR = 0.25; // 25% que l'organisateur prend sur le total de toutes les mises
 
     public function __construct(
         private PariBoxeRepository $pariBoxeRepository
@@ -27,6 +27,7 @@ class PariBoxeService
         $parisPerdants = [];
         $montantTotalGagnants = 0;
         $montantTotalPerdants = 0;
+        $montantTotalToutesMises = 0;
         
         // Séparer les paris gagnants et perdants
         foreach ($paris as $pari) {
@@ -34,18 +35,27 @@ class PariBoxeService
                 continue; // Ignorer les paris déjà résolus
             }
             
+            $mise = (float) $pari->getMontantMise();
+            $montantTotalToutesMises += $mise;
+            
             if ($pari->getCombatantParie() === $combatantGagnant) {
                 $parisGagnants[] = $pari;
-                $montantTotalGagnants += (float) $pari->getMontantMise();
+                $montantTotalGagnants += $mise;
             } else {
                 $parisPerdants[] = $pari;
-                $montantTotalPerdants += (float) $pari->getMontantMise();
+                $montantTotalPerdants += $mise;
             }
         }
         
-        // L'organisateur prend 25% sur le montant total des perdants (le pot)
-        $commissionTotaleOrganisateur = $montantTotalPerdants * self::COMMISSION_ORGANISATEUR;
-        $montantDistribuable = $montantTotalPerdants - $commissionTotaleOrganisateur; // 75% du pot
+        // L'organisateur prend 25% sur le montant total de TOUTES les mises (pas seulement les perdants)
+        $commissionTotaleOrganisateur = $montantTotalToutesMises * self::COMMISSION_ORGANISATEUR;
+        // Le montant distribué aux gagnants = mises des perdants - commission (25% du total)
+        $montantDistribuable = $montantTotalPerdants - $commissionTotaleOrganisateur;
+        
+        // Si la commission dépasse les mises des perdants, ajuster
+        if ($montantDistribuable < 0) {
+            $montantDistribuable = 0;
+        }
         
         $totalCommission = 0;
         $totalGainsDistribues = 0;
@@ -54,28 +64,26 @@ class PariBoxeService
         foreach ($parisPerdants as $pari) {
             $pari->setStatut('perdu');
             $pari->setGainCalcule('0.00');
-            // La commission pour les perdants est calculée sur leur mise (15% qui vont dans le pot)
-            // Mais on ne l'enregistre pas individuellement, c'est calculé sur le total
             $pari->setCommissionOrganisateur('0.00');
         }
         
-        // Traiter les paris gagnants : ils récupèrent leur mise + leur part des gains (75% du pot)
+        // Traiter les paris gagnants : ils récupèrent leur mise + leur part des gains
         if ($montantTotalPerdants > 0 && count($parisGagnants) > 0) {
-            // Répartir les 85% du pot entre les gagnants proportionnellement à leur mise
+            // Répartir le montant distribuable entre les gagnants proportionnellement à leur mise
             foreach ($parisGagnants as $pari) {
                 $mise = (float) $pari->getMontantMise();
                 
                 // Proportion de la mise du pari dans le total des gagnants
                 $proportion = $montantTotalGagnants > 0 ? $mise / $montantTotalGagnants : 0;
                 
-                // Part du gagnant dans les 75% distribuables
+                // Part du gagnant dans le montant distribuable
                 $partGains = $montantDistribuable * $proportion;
                 
                 // Le groupe récupère sa mise + sa part des gains
                 $gainTotal = $mise + $partGains;
                 
-                // Commission individuelle (pour affichage, proportionnelle à leur part)
-                $commissionIndividuelle = ($montantTotalPerdants * $proportion) * self::COMMISSION_ORGANISATEUR;
+                // Commission individuelle (pour affichage, proportionnelle)
+                $commissionIndividuelle = ($montantTotalToutesMises * $proportion) * self::COMMISSION_ORGANISATEUR;
                 
                 $pari->setStatut('gagne');
                 $pari->setGainCalcule(number_format($gainTotal, 2, '.', ''));
@@ -84,15 +92,24 @@ class PariBoxeService
                 $totalGainsDistribues += $gainTotal;
             }
             
-            // La commission totale est la même pour tous (15% du pot total)
+            // La commission totale (25% de toutes les mises)
             $totalCommission = $commissionTotaleOrganisateur;
         } elseif (count($parisGagnants) > 0 && $montantTotalPerdants === 0) {
-            // Si pas de perdants, les gagnants récupèrent juste leur mise, pas de commission
+            // Si pas de perdants, les gagnants récupèrent leur mise, mais commission quand même sur le total
+            $commissionTotaleOrganisateur = $montantTotalToutesMises * self::COMMISSION_ORGANISATEUR;
             foreach ($parisGagnants as $pari) {
+                $mise = (float) $pari->getMontantMise();
+                $proportion = $montantTotalGagnants > 0 ? $mise / $montantTotalGagnants : 0;
+                $commissionIndividuelle = $montantTotalToutesMises * $proportion * self::COMMISSION_ORGANISATEUR;
+                
+                // Gain = mise - commission proportionnelle
+                $gainTotal = $mise - $commissionIndividuelle;
+                
                 $pari->setStatut('gagne');
-                $pari->setGainCalcule($pari->getMontantMise());
-                $pari->setCommissionOrganisateur('0.00');
+                $pari->setGainCalcule(number_format(max(0, $gainTotal), 2, '.', ''));
+                $pari->setCommissionOrganisateur(number_format($commissionIndividuelle, 2, '.', ''));
             }
+            $totalCommission = $commissionTotaleOrganisateur;
         }
         
         return [
@@ -102,9 +119,9 @@ class PariBoxeService
             'nbParisPerdants' => count($parisPerdants),
             'montantTotalGagnants' => $montantTotalGagnants,
             'montantTotalPerdants' => $montantTotalPerdants,
+            'montantTotalToutesMises' => $montantTotalToutesMises,
             'totalCommission' => $totalCommission,
             'totalGainsDistribues' => $totalGainsDistribues,
         ];
     }
 }
-

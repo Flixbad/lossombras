@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PariBoxeService, PariBoxe, PariBoxeStats, CreatePariBoxeRequest } from '../../core/services/pari-boxe.service';
+import { PariBoxeService, PariBoxe, PariBoxeStats, CreatePariBoxeRequest, CombatBoxe, CreateCombatRequest } from '../../core/services/pari-boxe.service';
 import { AdminService } from '../../core/services/admin.service';
 import { User } from '../../core/services/auth.service';
 
@@ -249,8 +249,8 @@ import { User } from '../../core/services/auth.service';
               <div *ngIf="stats" class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                 <p class="text-sm text-yellow-800">
                   <strong>Attention :</strong> Cette action est irréversible. Les gains seront calculés automatiquement :
-                  <br>- L'organisateur prend 25% sur le pot total (montant des perdants)
-                  <br>- Les gagnants se partagent les 75% restants proportionnellement
+                  <br>- L'organisateur prend 25% sur le total de toutes les mises
+                  <br>- Les gagnants récupèrent leur mise + part des gains (mises perdants - commission)
                   <br>- Les perdants perdent leur mise
                 </p>
               </div>
@@ -278,7 +278,6 @@ export class PariBoxeComponent implements OnInit {
   selectedCombatId: string = '';
   combatantsUniques: string[] = [];
   combatsUniques: Array<{ id: string; titre: string }> = [];
-  combatsCrees: Array<{ id: string; titre: string }> = []; // Combats créés localement
   
   showNewCombatModal = false;
   showNewPariModal = false;
@@ -305,41 +304,26 @@ export class PariBoxeComponent implements OnInit {
 
   ngOnInit() {
     this.loadUsers();
+    this.loadCombats();
     this.loadParis();
-    this.loadCombatsCrees();
   }
 
-  loadCombatsCrees() {
-    const stored = localStorage.getItem('combats_boxe');
-    if (stored) {
-      this.combatsCrees = JSON.parse(stored);
-      this.updateCombatsList();
-    }
-  }
-
-  saveCombatsCrees() {
-    localStorage.setItem('combats_boxe', JSON.stringify(this.combatsCrees));
+  loadCombats() {
+    this.pariBoxeService.getCombats().subscribe({
+      next: (combats) => {
+        this.combatsUniques = combats.map(c => ({ id: c.id, titre: c.titre }));
+        // Si un combat est sélectionné, vérifier qu'il existe toujours
+        if (this.selectedCombatId && !this.combatsUniques.find(c => c.id === this.selectedCombatId)) {
+          this.selectedCombatId = '';
+        }
+      },
+      error: (err) => console.error('Erreur lors du chargement des combats:', err)
+    });
   }
 
   updateCombatsList() {
-    // Fusionner les combats des paris et les combats créés localement
-    const combatsMap = new Map<string, string>();
-    
-    // Ajouter les combats des paris
-    this.paris.forEach(pari => {
-      if (!combatsMap.has(pari.combatId)) {
-        combatsMap.set(pari.combatId, pari.combatTitre);
-      }
-    });
-    
-    // Ajouter les combats créés localement
-    this.combatsCrees.forEach(combat => {
-      if (!combatsMap.has(combat.id)) {
-        combatsMap.set(combat.id, combat.titre);
-      }
-    });
-    
-    this.combatsUniques = Array.from(combatsMap.entries()).map(([id, titre]) => ({ id, titre }));
+    // Les combats viennent maintenant de l'API
+    this.loadCombats();
   }
 
   loadUsers() {
@@ -356,7 +340,6 @@ export class PariBoxeComponent implements OnInit {
     this.pariBoxeService.getParis(combatId).subscribe({
       next: (paris) => {
         this.paris = paris;
-        this.updateCombatsList();
         this.extractCombatants();
         if (this.selectedCombatId) {
           this.loadStats();
@@ -405,26 +388,22 @@ export class PariBoxeComponent implements OnInit {
       return;
     }
     
-    // Créer un ID unique à partir du nom (normalisé)
-    const combatId = this.newCombat.nom.trim().toLowerCase().replace(/\s+/g, '_');
-    const combatTitre = this.newCombat.nom.trim();
+    const combat: CreateCombatRequest = {
+      nom: this.newCombat.nom.trim()
+    };
     
-    // Vérifier si le combat existe déjà
-    if (this.combatsUniques.some(c => c.id === combatId)) {
-      alert('Un combat avec ce nom existe déjà');
-      return;
-    }
-    
-    // Ajouter le combat à la liste locale
-    const nouveauCombat = { id: combatId, titre: combatTitre };
-    this.combatsCrees.push(nouveauCombat);
-    this.saveCombatsCrees();
-    this.updateCombatsList();
-    
-    // Sélectionner le nouveau combat
-    this.selectedCombatId = combatId;
-    this.showNewCombatModal = false;
-    this.newCombat = { nom: '' };
+    this.pariBoxeService.createCombat(combat).subscribe({
+      next: (nouveauCombat) => {
+        this.showNewCombatModal = false;
+        this.newCombat = { nom: '' };
+        this.loadCombats();
+        this.selectedCombatId = nouveauCombat.id;
+        this.loadCombatData();
+      },
+      error: (err) => {
+        alert(err.error?.error || 'Erreur lors de la création du combat');
+      }
+    });
   }
 
   openNewPariModal() {
@@ -500,12 +479,9 @@ export class PariBoxeComponent implements OnInit {
       next: (result) => {
         alert(`Combat supprimé avec succès. ${result.nbParisSupprimes} pari(s) supprimé(s).`);
         
-        // Retirer le combat de la liste locale
-        this.combatsCrees = this.combatsCrees.filter(c => c.id !== this.selectedCombatId);
-        this.saveCombatsCrees();
-        
         // Réinitialiser la sélection
         this.selectedCombatId = '';
+        this.loadCombats();
         this.loadCombatData();
       },
       error: (err) => {

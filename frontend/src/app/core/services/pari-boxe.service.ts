@@ -54,6 +54,17 @@ export interface ResoudreCombatRequest {
   combatantGagnant: string;
 }
 
+export interface CombatBoxe {
+  id: string;
+  titre: string;
+  nbParis?: number;
+  createdAt: string;
+}
+
+export interface CreateCombatRequest {
+  nom: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -89,6 +100,14 @@ export class PariBoxeService {
 
   deleteCombat(combatId: string): Observable<{ message: string; combatId: string; nbParisSupprimes: number }> {
     return this.http.delete<{ message: string; combatId: string; nbParisSupprimes: number }>(`${this.apiUrl}/combat/${combatId}`);
+  }
+
+  getCombats(): Observable<CombatBoxe[]> {
+    return this.http.get<CombatBoxe[]>(`${this.apiUrl}/combats`);
+  }
+
+  createCombat(combat: CreateCombatRequest): Observable<CombatBoxe> {
+    return this.http.post<CombatBoxe>(`${this.apiUrl}/combats`, combat);
   }
 }
 

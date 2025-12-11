@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\PariBoxe;
+use App\Entity\CombatBoxe;
 use App\Repository\PariBoxeRepository;
+use App\Repository\CombatBoxeRepository;
 use App\Repository\UserRepository;
 use App\Service\PariBoxeService;
 use App\Service\DateFormatterService;
@@ -222,12 +224,85 @@ class PariBoxeController extends AbstractController
         return new JsonResponse(['message' => 'Pari supprimé']);
     }
 
+    #[Route('/combats', name: 'api_pari_boxe_list_combats', methods: ['GET'])]
+    public function listCombats(
+        CombatBoxeRepository $combatRepo,
+        PariBoxeRepository $pariRepo,
+        DateFormatterService $dateFormatter
+    ): JsonResponse {
+        $combats = $combatRepo->findAll();
+        $data = [];
+        
+        foreach ($combats as $combat) {
+            $paris = $pariRepo->findByCombatId($combat->getCombatId());
+            $data[] = [
+                'id' => $combat->getCombatId(),
+                'titre' => $combat->getTitre(),
+                'nbParis' => count($paris),
+                'createdAt' => $dateFormatter->formatDateTimeISO($combat->getCreatedAt()),
+            ];
+        }
+        
+        return new JsonResponse($data);
+    }
+
+    #[Route('/combats', name: 'api_pari_boxe_create_combat', methods: ['POST'])]
+    public function createCombat(
+        Request $request,
+        CombatBoxeRepository $combatRepo,
+        EntityManagerInterface $em,
+        DateFormatterService $dateFormatter
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        
+        $nom = $data['nom'] ?? null;
+        
+        if (!$nom || trim($nom) === '') {
+            return new JsonResponse(['error' => 'Le nom du combat est requis'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        // Créer un ID unique à partir du nom (normalisé)
+        $titre = trim($nom);
+        $combatId = strtolower(preg_replace('/\s+/', '_', $titre));
+        
+        // Vérifier si le combat existe déjà
+        $combatExistant = $combatRepo->findByCombatId($combatId);
+        if ($combatExistant) {
+            return new JsonResponse(['error' => 'Un combat avec ce nom existe déjà'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        $combat = new CombatBoxe();
+        $combat->setCombatId($combatId);
+        $combat->setTitre($titre);
+        
+        try {
+            $em->persist($combat);
+            $em->flush();
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors de la création du combat',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        
+        return new JsonResponse([
+            'id' => $combat->getCombatId(),
+            'titre' => $combat->getTitre(),
+            'createdAt' => $dateFormatter->formatDateTimeISO($combat->getCreatedAt()),
+        ], Response::HTTP_CREATED);
+    }
+
     #[Route('/combat/{combatId}', name: 'api_pari_boxe_delete_combat', methods: ['DELETE'])]
-    public function deleteCombat(string $combatId, PariBoxeRepository $pariRepo, EntityManagerInterface $em): JsonResponse
-    {
+    public function deleteCombat(
+        string $combatId,
+        CombatBoxeRepository $combatRepo,
+        PariBoxeRepository $pariRepo,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $combat = $combatRepo->findByCombatId($combatId);
         $paris = $pariRepo->findByCombatId($combatId);
         
-        if (count($paris) === 0) {
+        if (!$combat && count($paris) === 0) {
             return new JsonResponse(['error' => 'Combat introuvable'], Response::HTTP_NOT_FOUND);
         }
         
@@ -235,6 +310,10 @@ class PariBoxeController extends AbstractController
         foreach ($paris as $pari) {
             $em->remove($pari);
             $nbParisSupprimes++;
+        }
+        
+        if ($combat) {
+            $em->remove($combat);
         }
         
         $em->flush();
