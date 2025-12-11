@@ -51,7 +51,7 @@ export interface CreatePariBoxeRequest {
 
 export interface ResoudreCombatRequest {
   combatId: string;
-  combatantGagnant: string;
+  combatantGagnant: string | null;
 }
 
 export interface CombatBoxe {
