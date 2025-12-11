@@ -199,14 +199,15 @@ export class SidebarComponent implements OnInit {
   isAdmin(): boolean {
     const user = this.currentUser;
     if (!user) return false;
-    return user.roles.some(role => 
-      role === 'ROLE_JEFE' || 
-      role === 'ROLE_SEGUNDO' || 
-      role === 'ROLE_COMANDANTE' ||
-      role === 'ROLE_ALFERES' ||
-      role === 'ROLE_CAPITAN' ||
-      role === 'ROLE_ARMADA'
-    );
+    // Rôles admin : Jefe, Segundo, Comandante, Alferez, Capitan
+    const adminRoles = [
+      'ROLE_JEFE',
+      'ROLE_SEGUNDO',
+      'ROLE_COMANDANTE',
+      'ROLE_ALFERES',
+      'ROLE_CAPITAN'
+    ];
+    return user.roles.some(role => adminRoles.includes(role));
   }
 
   isCapitanOrAbove(): boolean {

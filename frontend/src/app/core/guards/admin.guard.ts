@@ -17,14 +17,13 @@ export const adminGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  // Rôles admin : Jefe, Segundo, Comandante, Alfères, Capitan, Armada
+  // Rôles admin : Jefe, Segundo, Comandante, Alferez, Capitan
   const adminRoles = [
     'ROLE_JEFE',
     'ROLE_SEGUNDO',
     'ROLE_COMANDANTE',
     'ROLE_ALFERES',
-    'ROLE_CAPITAN',
-    'ROLE_ARMADA'
+    'ROLE_CAPITAN'
   ];
 
   const isAdmin = user.roles.some(role => adminRoles.includes(role));
